@@ -1,0 +1,40 @@
+{
+  "generatedAt": "2026-06-29T00:00:00Z",
+  "os": "fixture",
+  "appVersion": "fixture",
+  "ax": {
+    "window": { "attributes": {}, "writable": [], "failed": [], "ignored": [] },
+    "app": { "attributes": {}, "writable": [], "failed": [], "ignored": [] }
+  },
+  "omniwm": {
+    "tokenPid": 1000,
+    "tokenWindowId": 5,
+    "appName": "Emacs",
+    "bundleId": "org.gnu.Emacs",
+    "input": {
+      "appName": "Emacs",
+      "ax": {
+        "role": "AXWindow",
+        "subrole": "AXStandardWindow",
+        "title": "*scratch*",
+        "hasCloseButton": false,
+        "hasFullscreenButton": false,
+        "fullscreenButtonEnabled": null,
+        "hasZoomButton": false,
+        "hasMinimizeButton": false,
+        "frameAttributesSettable": true,
+        "appPolicy": "regular",
+        "bundleId": "org.gnu.Emacs",
+        "attributeFetchSucceeded": true
+      },
+      "appFullscreen": false,
+      "rules": []
+    },
+    "expected": {
+      "disposition": "managed",
+      "source": "heuristic",
+      "heuristicReasons": [],
+      "layoutDecisionKind": "fallbackLayout"
+    }
+  }
+}

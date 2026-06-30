@@ -14,6 +14,7 @@ struct AXWindowFactsDTO: Codable, Equatable, Sendable {
     var fullscreenButtonEnabled: Bool?
     var hasZoomButton: Bool
     var hasMinimizeButton: Bool
+    var frameAttributesSettable: Bool?
     var appPolicy: String?
     var bundleId: String?
     var attributeFetchSucceeded: Bool
@@ -27,6 +28,7 @@ struct AXWindowFactsDTO: Codable, Equatable, Sendable {
         fullscreenButtonEnabled = model.fullscreenButtonEnabled
         hasZoomButton = model.hasZoomButton
         hasMinimizeButton = model.hasMinimizeButton
+        frameAttributesSettable = model.frameAttributesSettable
         appPolicy = model.appPolicy.flatMap(Self.string(from:))
         bundleId = model.bundleId
         attributeFetchSucceeded = model.attributeFetchSucceeded

@@ -166,6 +166,7 @@ struct AXWindowFacts: Equatable, Sendable {
     let fullscreenButtonEnabled: Bool?
     let hasZoomButton: Bool
     let hasMinimizeButton: Bool
+    let frameAttributesSettable: Bool
     let appPolicy: NSApplication.ActivationPolicy?
     let bundleId: String?
     let attributeFetchSucceeded: Bool
@@ -524,6 +525,7 @@ enum AXWindowService {
                 fullscreenButtonEnabled: nil,
                 hasZoomButton: false,
                 hasMinimizeButton: false,
+                frameAttributesSettable: false,
                 appPolicy: appPolicy,
                 bundleId: bundleId,
                 attributeFetchSucceeded: false
@@ -535,33 +537,26 @@ enum AXWindowService {
             return valuesArray[index.rawValue]
         }
 
-        func hasResolvedAttribute(_ value: Any?) -> Bool {
-            guard let value else { return false }
-            return !(value is NSError)
+        func hasResolvedElementAttribute(_ value: Any?) -> Bool {
+            guard let value,
+                  !(value is NSError),
+                  CFGetTypeID(value as CFTypeRef) == AXUIElementGetTypeID()
+            else { return false }
+            return true
+        }
+
+        func isAttributeSettable(_ name: CFString) -> Bool {
+            var settable = DarwinBoolean(false)
+            let result = AXUIElementIsAttributeSettable(window.element, name, &settable)
+            return result == .success && settable.boolValue
         }
 
         let fullscreenButtonElement = attributeValue(.fullScreenButton)
         var attributeFetchSucceeded = true
-        let hasFullscreenButton = hasResolvedAttribute(fullscreenButtonElement)
+        let hasFullscreenButton = hasResolvedElementAttribute(fullscreenButtonElement)
 
         var fullscreenButtonEnabled: Bool?
         if hasFullscreenButton, let fullscreenButtonElement {
-            guard CFGetTypeID(fullscreenButtonElement as CFTypeRef) == AXUIElementGetTypeID() else {
-                attributeFetchSucceeded = false
-                return AXWindowFacts(
-                    role: attributeValue(.role) as? String,
-                    subrole: attributeValue(.subrole) as? String,
-                    title: includeTitle ? (attributeValue(.title) as? String) : nil,
-                    hasCloseButton: hasResolvedAttribute(attributeValue(.closeButton)),
-                    hasFullscreenButton: false,
-                    fullscreenButtonEnabled: nil,
-                    hasZoomButton: hasResolvedAttribute(attributeValue(.zoomButton)),
-                    hasMinimizeButton: hasResolvedAttribute(attributeValue(.minimizeButton)),
-                    appPolicy: appPolicy,
-                    bundleId: bundleId,
-                    attributeFetchSucceeded: attributeFetchSucceeded
-                )
-            }
             let buttonElement = unsafeDowncast(fullscreenButtonElement as AnyObject, to: AXUIElement.self)
             var enabledValue: CFTypeRef?
             let enabledResult = AXUIElementCopyAttributeValue(
@@ -584,11 +579,13 @@ enum AXWindowService {
             role: attributeValue(.role) as? String,
             subrole: attributeValue(.subrole) as? String,
             title: includeTitle ? (attributeValue(.title) as? String) : nil,
-            hasCloseButton: hasResolvedAttribute(attributeValue(.closeButton)),
+            hasCloseButton: hasResolvedElementAttribute(attributeValue(.closeButton)),
             hasFullscreenButton: hasFullscreenButton,
             fullscreenButtonEnabled: fullscreenButtonEnabled,
-            hasZoomButton: hasResolvedAttribute(attributeValue(.zoomButton)),
-            hasMinimizeButton: hasResolvedAttribute(attributeValue(.minimizeButton)),
+            hasZoomButton: hasResolvedElementAttribute(attributeValue(.zoomButton)),
+            hasMinimizeButton: hasResolvedElementAttribute(attributeValue(.minimizeButton)),
+            frameAttributesSettable: isAttributeSettable(kAXPositionAttribute as CFString)
+                && isAttributeSettable(kAXSizeAttribute as CFString),
             appPolicy: appPolicy,
             bundleId: bundleId,
             attributeFetchSucceeded: attributeFetchSucceeded
@@ -628,6 +625,16 @@ enum AXWindowService {
             return AXWindowHeuristicDisposition(
                 disposition: .floating,
                 reasons: [.noButtonsOnNonStandardSubrole]
+            )
+        }
+
+        if !hasAnyButton,
+           facts.subrole == kAXStandardWindowSubrole as String,
+           facts.frameAttributesSettable
+        {
+            return AXWindowHeuristicDisposition(
+                disposition: .managed,
+                reasons: []
             )
         }
 

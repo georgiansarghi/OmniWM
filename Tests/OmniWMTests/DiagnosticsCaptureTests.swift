@@ -69,6 +69,7 @@ final class DiagnosticsCaptureTests: XCTestCase {
             fullscreenButtonEnabled: nil,
             hasZoomButton: false,
             hasMinimizeButton: true,
+            frameAttributesSettable: true,
             appPolicy: .accessory,
             bundleId: "com.example.app",
             attributeFetchSucceeded: true

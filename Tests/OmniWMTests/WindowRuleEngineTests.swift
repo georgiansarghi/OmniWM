@@ -26,6 +26,7 @@ final class WindowRuleEngineTests: XCTestCase {
                 fullscreenButtonEnabled: true,
                 hasZoomButton: true,
                 hasMinimizeButton: true,
+                frameAttributesSettable: true,
                 appPolicy: .regular,
                 bundleId: bundleId,
                 attributeFetchSucceeded: true

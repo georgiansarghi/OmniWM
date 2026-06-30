@@ -17,6 +17,7 @@ extension AXWindowFactsDTO {
             fullscreenButtonEnabled: fullscreenButtonEnabled,
             hasZoomButton: hasZoomButton,
             hasMinimizeButton: hasMinimizeButton,
+            frameAttributesSettable: frameAttributesSettable ?? false,
             appPolicy: Self.policy(from: appPolicy),
             bundleId: bundleId,
             attributeFetchSucceeded: attributeFetchSucceeded

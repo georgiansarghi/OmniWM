@@ -1719,6 +1719,7 @@ final class WMController {
                     fullscreenButtonEnabled: nil,
                     hasZoomButton: false,
                     hasMinimizeButton: false,
+                    frameAttributesSettable: false,
                     appPolicy: nil,
                     bundleId: nil,
                     attributeFetchSucceeded: true
