@@ -2,6 +2,8 @@
 // Copyright (C) 2026 BarutSRB — https://github.com/BarutSRB/OmniWM
 
 import Foundation
+
+#if compiler(>=6.4)
 import FoundationModels
 
 @available(macOS 27.0, *)
@@ -82,3 +84,4 @@ private struct GeneratedIssue {
     @Guide(description: "Other context the user gave: layout, monitors, app/window, hotkey+command, or 'Not provided'")
     var additionalContext: String
 }
+#endif
