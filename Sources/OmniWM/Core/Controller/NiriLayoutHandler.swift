@@ -1875,6 +1875,7 @@ import QuartzCore
                 engine: ctx.engine,
                 in: ctx.wsId
             )
+            let sourceColumnWindowCount = ctx.engine.findColumn(containing: ctx.windowNode, in: ctx.wsId)?.windowNodes.count
             let oldFrames = direction == .left || direction == .right
                 ? [:]
                 : ctx.engine.captureWindowFrames(in: ctx.wsId)
@@ -1894,7 +1895,11 @@ import QuartzCore
 
             result = .movedWithinWorkspace
             if direction == .left || direction == .right {
-                ctx.record(.windowConsumedOrExpelled(token: ctx.windowNode.token))
+                if sourceColumnWindowCount == 1 {
+                    ctx.record(.columnMoved)
+                } else {
+                    ctx.record(.windowConsumedOrExpelled(token: ctx.windowNode.token))
+                }
                 return ctx.commitSimple(state: state)
             }
             ctx.record(.windowMovedInColumn(token: ctx.windowNode.token))

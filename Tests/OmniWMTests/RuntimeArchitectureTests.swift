@@ -4431,6 +4431,76 @@ final class RuntimeArchitectureTests: XCTestCase {
     }
 
     @MainActor
+    func testHorizontalMoveOfSingleWindowMovesWholeColumn() throws {
+        let controller = Self.controller()
+        let wsId = try XCTUnwrap(controller.workspaceManager.workspaceId(for: "1", createIfMissing: true))
+        _ = controller.workspaceManager.focusWorkspace(named: "1")
+        controller.niriLayoutHandler.enableNiriLayout()
+
+        let engine = try XCTUnwrap(controller.niriEngine)
+        let leftToken = controller.workspaceManager.addWindow(
+            AXWindowRef(element: AXUIElementCreateApplication(819_001), windowId: 819_101),
+            pid: 819_001, windowId: 819_101, to: wsId
+        )
+        let rightToken = controller.workspaceManager.addWindow(
+            AXWindowRef(element: AXUIElementCreateApplication(819_002), windowId: 819_102),
+            pid: 819_002, windowId: 819_102, to: wsId
+        )
+        let leftNode = engine.addWindow(token: leftToken, to: wsId, afterSelection: nil)
+        let rightNode = engine.addWindow(token: rightToken, to: wsId, afterSelection: leftNode.id, focusedToken: leftToken)
+        _ = controller.workspaceManager.commitWorkspaceSelection(
+            nodeId: leftNode.id, focusedToken: leftToken, in: wsId,
+            onMonitor: controller.workspaceManager.monitorId(for: wsId)
+        )
+
+        XCTAssertEqual(controller.niriLayoutHandler.moveWindow(direction: .right), .movedWithinWorkspace)
+
+        let columns = engine.columns(in: wsId)
+        XCTAssertEqual(columns.count, 2)
+        XCTAssertEqual(columns[0].windowNodes.map(\.token), [rightToken])
+        XCTAssertEqual(columns[1].windowNodes.map(\.token), [leftToken])
+        XCTAssertEqual(controller.workspaceManager.niriViewportState(for: wsId).selectedNodeId, leftNode.id)
+        XCTAssertEqual(engine.findColumn(containing: leftNode, in: wsId)?.windowNodes.count, 1)
+        XCTAssertEqual(engine.findColumn(containing: rightNode, in: wsId)?.windowNodes.count, 1)
+    }
+
+    @MainActor
+    func testExpellingSelectedNiriWindowKeepsSelectionOnExpelledWindow() throws {
+        let controller = Self.controller()
+        let wsId = try XCTUnwrap(controller.workspaceManager.workspaceId(for: "1", createIfMissing: true))
+        _ = controller.workspaceManager.focusWorkspace(named: "1")
+        controller.niriLayoutHandler.enableNiriLayout()
+
+        let engine = try XCTUnwrap(controller.niriEngine)
+        let leftToken = controller.workspaceManager.addWindow(
+            AXWindowRef(element: AXUIElementCreateApplication(820_001), windowId: 820_101),
+            pid: 820_001, windowId: 820_101, to: wsId
+        )
+        let rightToken = controller.workspaceManager.addWindow(
+            AXWindowRef(element: AXUIElementCreateApplication(820_002), windowId: 820_102),
+            pid: 820_002, windowId: 820_102, to: wsId
+        )
+        let leftNode = engine.addWindow(token: leftToken, to: wsId, afterSelection: nil)
+        _ = engine.addWindow(token: rightToken, to: wsId, afterSelection: leftNode.id, focusedToken: leftToken)
+        _ = controller.workspaceManager.commitWorkspaceSelection(
+            nodeId: leftNode.id, focusedToken: leftToken, in: wsId,
+            onMonitor: controller.workspaceManager.monitorId(for: wsId)
+        )
+
+        controller.niriLayoutHandler.consumeOrExpelWindow(direction: .right)
+        XCTAssertEqual(engine.columns(in: wsId).count, 1)
+        XCTAssertEqual(engine.column(of: leftNode)?.windowNodes.count, 2)
+        XCTAssertEqual(controller.workspaceManager.niriViewportState(for: wsId).selectedNodeId, leftNode.id)
+
+        controller.niriLayoutHandler.consumeOrExpelWindow(direction: .right)
+        XCTAssertEqual(engine.columns(in: wsId).count, 2)
+        let expelledColumn = try XCTUnwrap(engine.column(of: leftNode))
+        XCTAssertEqual(expelledColumn.windowNodes.count, 1)
+        XCTAssertTrue(expelledColumn.windowNodes.first === leftNode)
+        XCTAssertEqual(controller.workspaceManager.niriViewportState(for: wsId).selectedNodeId, leftNode.id)
+    }
+
+    @MainActor
     func testMoveAtRightEdgeReportsWorkspaceEdgeWhenCrossEnabled() throws {
         let controller = Self.controller()
         let wsId = try XCTUnwrap(controller.workspaceManager.workspaceId(for: "1", createIfMissing: true))
@@ -4875,6 +4945,7 @@ final class RuntimeArchitectureTests: XCTestCase {
 
         XCTAssertEqual(outcome, .movedWithinWorkspace)
         XCTAssertEqual(controller.workspaceManager.workspace(for: rightToken), wsId)
+        XCTAssertEqual(engine.columns(in: wsId).first?.windowNodes.map(\.token), [rightToken])
     }
 
     @MainActor
@@ -5025,6 +5096,7 @@ final class RuntimeArchitectureTests: XCTestCase {
                 fullscreenButtonEnabled: true,
                 hasZoomButton: true,
                 hasMinimizeButton: true,
+                frameAttributesSettable: true,
                 appPolicy: .regular,
                 bundleId: nativeTabBundleId(pid: pid),
                 attributeFetchSucceeded: true

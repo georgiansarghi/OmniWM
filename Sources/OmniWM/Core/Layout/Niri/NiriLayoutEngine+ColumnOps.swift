@@ -481,6 +481,66 @@ extension NiriLayoutEngine {
         clearInteractiveResize()
     }
 
+    func moveWindowHorizontal(
+        _ window: NiriWindow,
+        direction: Direction,
+        in workspaceId: WorkspaceDescriptor.ID,
+        motion: MotionSnapshot,
+        state: inout ViewportState,
+        workingFrame: CGRect,
+        gaps: CGFloat,
+        allowEdgeWrap: Bool = true
+    ) -> Bool {
+        assertSanctionedMutation()
+        guard direction == .left || direction == .right else { return false }
+        guard let currentColumn = findColumn(containing: window, in: workspaceId) else {
+            return false
+        }
+
+        if currentColumn.windowNodes.count > 1 {
+            return expelWindow(
+                window,
+                to: direction,
+                in: workspaceId,
+                motion: motion,
+                state: &state,
+                workingFrame: workingFrame,
+                gaps: gaps
+            )
+        }
+
+        let cols = columns(in: workspaceId)
+        guard let currentIdx = columnIndex(of: currentColumn, in: workspaceId) else { return false }
+        let step = (direction == .right) ? 1 : -1
+        let adjacentIdx = currentIdx + step
+        if adjacentIdx >= 0, adjacentIdx < cols.count {
+            return moveColumn(
+                currentColumn,
+                direction: direction,
+                in: workspaceId,
+                motion: motion,
+                state: &state,
+                workingFrame: workingFrame,
+                gaps: gaps
+            )
+        }
+
+        guard allowEdgeWrap,
+              let wrappedIdx = wrapIndex(adjacentIdx, total: cols.count, in: workspaceId),
+              wrappedIdx != currentIdx
+        else { return false }
+
+        return moveColumnToIndex(
+            currentColumn,
+            wrappedIdx + 1,
+            in: workspaceId,
+            motion: motion,
+            state: &state,
+            workingFrame: workingFrame,
+            gaps: gaps
+        )
+    }
+
     func consumeOrExpelWindow(
         _ window: NiriWindow,
         direction: Direction,
@@ -869,6 +929,7 @@ extension NiriLayoutEngine {
         }
 
         cleanupEmptyColumn(currentColumn, in: workspaceId, state: &state)
+        state.selectedNodeId = window.id
 
         ensureSelectionVisible(
             node: window,

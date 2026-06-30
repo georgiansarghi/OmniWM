@@ -22,7 +22,7 @@ extension NiriLayoutEngine {
             moveWindowVertical(node, direction: direction)
         case .left,
              .right:
-            consumeOrExpelWindow(
+            moveWindowHorizontal(
                 node,
                 direction: direction,
                 in: workspaceId,
