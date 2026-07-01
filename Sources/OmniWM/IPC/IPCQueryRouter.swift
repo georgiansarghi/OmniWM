@@ -366,7 +366,7 @@ final class IPCQueryRouter {
         fields: Set<String>?
     ) -> IPCDisplayQuerySnapshot {
         let activeWorkspace = controller.workspaceManager.activeWorkspace(on: monitor.id)
-        let gaps = controller.settings.resolvedGapSettings(for: monitor)
+        let gaps = controller.resolvedGapSettings(for: monitor)
         return IPCDisplayQuerySnapshot(
             id: include("id", in: fields) ? monitorIdentifier(monitor.id) : nil,
             name: include("name", in: fields) ? monitor.name : nil,

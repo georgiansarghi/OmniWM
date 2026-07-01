@@ -101,6 +101,10 @@ final class WMController {
     let focusPolicyEngine: FocusPolicyEngine
     private let restorePlanner = RestorePlanner()
     let windowRuleEngine = WindowRuleEngine()
+    private var runtimeOuterGapLeft: Double?
+    private var runtimeOuterGapRight: Double?
+    private var runtimeOuterGapTop: Double?
+    private var runtimeOuterGapBottom: Double?
 
     var niriEngine: NiriLayoutEngine? {
         get { workspaceManager.niriEngine }
@@ -453,12 +457,41 @@ final class WMController {
     }
 
     func setRuntimeOuterGap(left: Double? = nil, right: Double? = nil, top: Double? = nil, bottom: Double? = nil) {
-        let current = workspaceManager.outerGaps
+        if let left {
+            runtimeOuterGapLeft = left
+        }
+        if let right {
+            runtimeOuterGapRight = right
+        }
+        if let top {
+            runtimeOuterGapTop = top
+        }
+        if let bottom {
+            runtimeOuterGapBottom = bottom
+        }
+
+        let monitor = workspaceManager.monitors.first
+        let gaps = monitor.map(resolvedGapSettings) ?? ResolvedGapSettings(
+            outerGapLeft: CGFloat(runtimeOuterGapLeft ?? settings.outerGapLeft),
+            outerGapRight: CGFloat(runtimeOuterGapRight ?? settings.outerGapRight),
+            outerGapTop: CGFloat(runtimeOuterGapTop ?? settings.outerGapTop),
+            outerGapBottom: CGFloat(runtimeOuterGapBottom ?? settings.outerGapBottom)
+        )
         workspaceManager.setOuterGaps(
-            left: left ?? Double(current.left),
-            right: right ?? Double(current.right),
-            top: top ?? Double(current.top),
-            bottom: bottom ?? Double(current.bottom)
+            left: Double(gaps.outerGapLeft),
+            right: Double(gaps.outerGapRight),
+            top: Double(gaps.outerGapTop),
+            bottom: Double(gaps.outerGapBottom)
+        )
+    }
+
+    func resolvedGapSettings(for monitor: Monitor) -> ResolvedGapSettings {
+        let base = settings.resolvedGapSettings(for: monitor)
+        return ResolvedGapSettings(
+            outerGapLeft: CGFloat(runtimeOuterGapLeft ?? Double(base.outerGapLeft)),
+            outerGapRight: CGFloat(runtimeOuterGapRight ?? Double(base.outerGapRight)),
+            outerGapTop: CGFloat(runtimeOuterGapTop ?? Double(base.outerGapTop)),
+            outerGapBottom: CGFloat(runtimeOuterGapBottom ?? Double(base.outerGapBottom))
         )
     }
 
@@ -767,7 +800,7 @@ final class WMController {
     func insetWorkingFrame(for monitor: Monitor) -> CGRect {
         let scale = NSScreen.screens.first(where: { $0.displayId == monitor.displayId })?.backingScaleFactor ?? 2.0
         let reservedTopInset = workspaceBarReservedTopInset(for: monitor)
-        let gaps = settings.resolvedGapSettings(for: monitor)
+        let gaps = resolvedGapSettings(for: monitor)
         let menuBarInset = max(0, monitor.frame.maxY - monitor.visibleFrame.maxY)
         let struts = Struts(
             left: gaps.outerGapLeft,
