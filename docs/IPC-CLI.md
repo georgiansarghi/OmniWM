@@ -293,7 +293,7 @@ omniwmctl command <command-path> [arguments...]
 | `command move-to-workspace down` | — | shared | Move focused window to the adjacent workspace below |
 | `command move-to-workspace on-monitor` | `<number> <left\|right\|up\|down>` | shared | Move focused window to a workspace already assigned to the requested adjacent monitor |
 
-Workspace IDs are positive numeric strings. Direct hotkeys stay limited to `1-9`, but the workspace UI and IPC/CLI both support `10+`.
+Workspace IDs are positive numeric strings. Direct hotkeys support `1-9` and `0` for the 10th workspace; the workspace UI and IPC/CLI both support `10+`.
 
 ### Monitor Focus
 

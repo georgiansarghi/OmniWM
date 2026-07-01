@@ -42,7 +42,7 @@ enum WorkspaceConfigurationAddPolicy {
 
     static let addButtonHelp = "Add the lowest unused workspace ID"
     static let footerText =
-        "Workspace IDs use positive numeric slots. Display Name stays editable. Direct workspace hotkeys remain limited to 1-9; add 10+ here or through IPC/CLI."
+        "Workspace IDs use positive numeric slots. Display Name stays editable. Direct workspace hotkeys support 1-9 and 0 for the 10th; add higher IDs here or through IPC/CLI."
 }
 
 struct WorkspacesSettingsTab: View {

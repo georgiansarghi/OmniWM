@@ -38,7 +38,8 @@ enum ActionCatalog {
     private static let digitCodes: [UInt32] = [
         UInt32(kVK_ANSI_1), UInt32(kVK_ANSI_2), UInt32(kVK_ANSI_3),
         UInt32(kVK_ANSI_4), UInt32(kVK_ANSI_5), UInt32(kVK_ANSI_6),
-        UInt32(kVK_ANSI_7), UInt32(kVK_ANSI_8), UInt32(kVK_ANSI_9)
+        UInt32(kVK_ANSI_7), UInt32(kVK_ANSI_8), UInt32(kVK_ANSI_9),
+        UInt32(kVK_ANSI_0)
     ]
 
     private static let specs: [ActionSpec] = buildSpecs()
@@ -310,7 +311,7 @@ enum ActionCatalog {
             )
         ])
 
-        for idx in 0 ..< 9 {
+        for idx in 0 ..< digitCodes.count {
             specs.append(
                 action(
                     id: "moveColumnToWorkspace.\(idx)",
