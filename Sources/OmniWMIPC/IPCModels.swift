@@ -2069,6 +2069,7 @@ public struct IPCWorkspaceBarWindow: Codable, Equatable, Sendable {
 public struct IPCWorkspaceBarApp: Codable, Equatable, Sendable {
     public let id: String
     public let appName: String
+    public let bundleId: String?
     public let isFocused: Bool
     public let windowCount: Int
     public let allWindows: [IPCWorkspaceBarWindow]
@@ -2076,12 +2077,14 @@ public struct IPCWorkspaceBarApp: Codable, Equatable, Sendable {
     public init(
         id: String,
         appName: String,
+        bundleId: String? = nil,
         isFocused: Bool,
         windowCount: Int,
         allWindows: [IPCWorkspaceBarWindow]
     ) {
         self.id = id
         self.appName = appName
+        self.bundleId = bundleId
         self.isFocused = isFocused
         self.windowCount = windowCount
         self.allWindows = allWindows
