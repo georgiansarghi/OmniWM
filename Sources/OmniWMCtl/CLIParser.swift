@@ -677,6 +677,14 @@ enum CLIParser {
         return isProportion ? .setProportion(value) : .setFixed(value)
     }
 
+    private static func parsePoints(_ rawValue: String) throws -> Double {
+        let trimmed = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let value = Double(trimmed), value.isFinite else {
+            throw CLIParseError.usage(usageText)
+        }
+        return value
+    }
+
     private static func parseCommandArgumentValue(
         _ pair: (IPCCommandArgumentDescriptor, String)
     ) throws -> IPCCommandArgumentValue {
@@ -697,6 +705,8 @@ enum CLIParser {
             return .resizeOperation(try parseResizeOperation(token))
         case .sizeChange:
             return .sizeChange(try parseSizeChange(token))
+        case .points:
+            return .double(try parsePoints(token))
         }
     }
 

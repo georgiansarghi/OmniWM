@@ -250,6 +250,10 @@ public enum IPCCommandName: String, Codable, CaseIterable, Equatable, Sendable {
     case setWindowWidth = "set-window-width"
     case setWindowHeight = "set-window-height"
     case swapWorkspaceWithMonitor = "swap-workspace-with-monitor"
+    case setGapLeft = "set-gap-left"
+    case setGapRight = "set-gap-right"
+    case setGapTop = "set-gap-top"
+    case setGapBottom = "set-gap-bottom"
     case balanceSizes = "balance-sizes"
     case moveToRoot = "move-to-root"
     case toggleSplit = "toggle-split"
@@ -315,6 +319,7 @@ public enum IPCCommandArgumentValue: Equatable, Sendable {
     case layout(IPCWorkspaceLayout)
     case resizeOperation(IPCResizeOperation)
     case sizeChange(IPCSizeChange)
+    case double(Double)
 }
 
 public enum IPCCommandRequestConstructionError: Error, Equatable, Sendable {
@@ -381,6 +386,10 @@ public enum IPCCommandRequest: Equatable, Sendable {
     case setWindowWidth(change: IPCSizeChange)
     case setWindowHeight(change: IPCSizeChange)
     case swapWorkspaceWithMonitor(direction: IPCDirection)
+    case setGapLeft(points: Double)
+    case setGapRight(points: Double)
+    case setGapTop(points: Double)
+    case setGapBottom(points: Double)
     case balanceSizes
     case moveToRoot
     case toggleSplit
@@ -524,6 +533,14 @@ public enum IPCCommandRequest: Equatable, Sendable {
             .setWindowHeight
         case .swapWorkspaceWithMonitor:
             .swapWorkspaceWithMonitor
+        case .setGapLeft:
+            .setGapLeft
+        case .setGapRight:
+            .setGapRight
+        case .setGapTop:
+            .setGapTop
+        case .setGapBottom:
+            .setGapBottom
         case .balanceSizes:
             .balanceSizes
         case .moveToRoot:
@@ -608,6 +625,13 @@ public enum IPCCommandRequest: Equatable, Sendable {
                 throw IPCCommandRequestConstructionError.invalidArgumentType
             }
             return change
+        }
+
+        func requireDouble() throws -> Double {
+            guard argumentValues.count == 1, case let .double(value) = argumentValues[0] else {
+                throw IPCCommandRequestConstructionError.invalidArgumentType
+            }
+            return value
         }
 
         func requireResizeArguments() throws -> (direction: IPCDirection, operation: IPCResizeOperation) {
@@ -801,6 +825,14 @@ public enum IPCCommandRequest: Equatable, Sendable {
             self = .setWindowHeight(change: try requireSizeChange())
         case .swapWorkspaceWithMonitor:
             self = .swapWorkspaceWithMonitor(direction: try requireDirection())
+        case .setGapLeft:
+            self = .setGapLeft(points: try requireDouble())
+        case .setGapRight:
+            self = .setGapRight(points: try requireDouble())
+        case .setGapTop:
+            self = .setGapTop(points: try requireDouble())
+        case .setGapBottom:
+            self = .setGapBottom(points: try requireDouble())
         case .balanceSizes:
             try requireNoArguments()
             self = .balanceSizes
@@ -916,6 +948,10 @@ extension IPCCommandRequest: Codable {
 
     private struct IPCSizeChangeArguments: Codable, Equatable, Sendable {
         let change: IPCSizeChange
+    }
+
+    private struct IPCPointsArguments: Codable, Equatable, Sendable {
+        let points: Double
     }
 
     public init(from decoder: Decoder) throws {
@@ -1054,6 +1090,18 @@ extension IPCCommandRequest: Codable {
         case .swapWorkspaceWithMonitor:
             let arguments = try container.decode(IPCDirectionArguments.self, forKey: .arguments)
             self = .swapWorkspaceWithMonitor(direction: arguments.direction)
+        case .setGapLeft:
+            let arguments = try container.decode(IPCPointsArguments.self, forKey: .arguments)
+            self = .setGapLeft(points: arguments.points)
+        case .setGapRight:
+            let arguments = try container.decode(IPCPointsArguments.self, forKey: .arguments)
+            self = .setGapRight(points: arguments.points)
+        case .setGapTop:
+            let arguments = try container.decode(IPCPointsArguments.self, forKey: .arguments)
+            self = .setGapTop(points: arguments.points)
+        case .setGapBottom:
+            let arguments = try container.decode(IPCPointsArguments.self, forKey: .arguments)
+            self = .setGapBottom(points: arguments.points)
         case .balanceSizes:
             self = .balanceSizes
         case .moveToRoot:
@@ -1233,6 +1281,11 @@ extension IPCCommandRequest: Codable {
             try container.encode(IPCSizeChangeArguments(change: change), forKey: .arguments)
         case let .swapWorkspaceWithMonitor(direction):
             try container.encode(IPCDirectionArguments(direction: direction), forKey: .arguments)
+        case let .setGapLeft(points),
+             let .setGapRight(points),
+             let .setGapTop(points),
+             let .setGapBottom(points):
+            try container.encode(IPCPointsArguments(points: points), forKey: .arguments)
         case .balanceSizes:
             break
         case .moveToRoot:

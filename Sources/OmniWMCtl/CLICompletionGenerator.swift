@@ -481,7 +481,8 @@ enum CLICompletionGenerator {
         case .workspaceNumber,
              .columnIndex,
              .windowIndex,
-             .sizeChange:
+             .sizeChange,
+             .points:
             return nil
         }
     }

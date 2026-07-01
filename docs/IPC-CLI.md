@@ -304,6 +304,17 @@ Workspace IDs are positive numeric strings. Direct hotkeys support `1-9` and `0`
 | `command focus-monitor last` | — | shared | Move focus back to the previous monitor |
 | `command swap-workspace-with-monitor` | `<left\|right\|up\|down>` | shared | Swap active workspace with the workspace on an adjacent monitor |
 
+### Runtime Gaps
+
+| Command | Arguments | Layout | Description |
+|---------|-----------|--------|-------------|
+| `command set-gaps --left` | `<points>` | shared | Set the runtime left outer gap |
+| `command set-gaps --right` | `<points>` | shared | Set the runtime right outer gap |
+| `command set-gaps --top` | `<points>` | shared | Set the runtime top outer gap |
+| `command set-gaps --bottom` | `<points>` | shared | Set the runtime bottom outer gap |
+
+Runtime gap commands are intentionally not persisted to the settings file. They are meant for scripts that temporarily reserve or release screen space, such as hiding an external bar.
+
 ### Column Operations (Niri)
 
 | Command | Arguments | Layout | Description |

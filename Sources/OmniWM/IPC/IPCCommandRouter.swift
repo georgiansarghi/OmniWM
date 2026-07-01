@@ -159,6 +159,14 @@ final class IPCCommandRouter {
             return controller.commandHandler.performCommand(.setWindowHeight(sizeChange(for: change)))
         case let .swapWorkspaceWithMonitor(ipcDirection):
             return swapWorkspaceWithMonitor(direction: direction(for: ipcDirection))
+        case let .setGapLeft(points):
+            return setRuntimeOuterGap(left: points)
+        case let .setGapRight(points):
+            return setRuntimeOuterGap(right: points)
+        case let .setGapTop(points):
+            return setRuntimeOuterGap(top: points)
+        case let .setGapBottom(points):
+            return setRuntimeOuterGap(bottom: points)
         case .balanceSizes:
             return controller.commandHandler.performCommand(.balanceSizes)
         case .moveToRoot:
@@ -282,6 +290,23 @@ final class IPCCommandRouter {
         case .down:
             .down
         }
+    }
+
+    private func setRuntimeOuterGap(
+        left: Double? = nil,
+        right: Double? = nil,
+        top: Double? = nil,
+        bottom: Double? = nil
+    ) -> ExternalCommandResult {
+        if let guardResult = validateControllerState() {
+            return guardResult
+        }
+        let values = [left, right, top, bottom].compactMap { $0 }
+        guard values.allSatisfy({ $0.isFinite && $0 >= 0 }) else {
+            return .invalidArguments
+        }
+        controller.setRuntimeOuterGap(left: left, right: right, top: top, bottom: bottom)
+        return .executed
     }
 
     private func sizeChange(for change: IPCSizeChange) -> NiriSizeChange {

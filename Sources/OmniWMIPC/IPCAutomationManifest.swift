@@ -53,6 +53,7 @@ public enum IPCCommandArgumentKind: String, Codable, CaseIterable, Equatable, Se
     case layout
     case resizeOperation = "resize-operation"
     case sizeChange = "size-change"
+    case points
 
     public var usagePlaceholder: String {
         switch self {
@@ -68,6 +69,8 @@ public enum IPCCommandArgumentKind: String, Codable, CaseIterable, Equatable, Se
             "<grow|shrink>"
         case .sizeChange:
             "<size-change>"
+        case .points:
+            "<points>"
         }
     }
 }
@@ -269,6 +272,10 @@ public enum IPCAutomationManifest {
     private static let sizeChangeArgument = IPCCommandArgumentDescriptor(
         kind: .sizeChange,
         summary: "Size change such as 100, 50%, +10, or -10%."
+    )
+    private static let pointsArgument = IPCCommandArgumentDescriptor(
+        kind: .points,
+        summary: "Gap size in screen points."
     )
 
     private static func command(
@@ -762,6 +769,30 @@ public enum IPCAutomationManifest {
             name: .swapWorkspaceWithMonitor,
             summary: "Swap the active workspace with the active workspace on an adjacent monitor.",
             arguments: [directionArgument]
+        ),
+        command(
+            ["set-gaps", "--left"],
+            name: .setGapLeft,
+            summary: "Set the runtime left outer gap.",
+            arguments: [pointsArgument]
+        ),
+        command(
+            ["set-gaps", "--right"],
+            name: .setGapRight,
+            summary: "Set the runtime right outer gap.",
+            arguments: [pointsArgument]
+        ),
+        command(
+            ["set-gaps", "--top"],
+            name: .setGapTop,
+            summary: "Set the runtime top outer gap.",
+            arguments: [pointsArgument]
+        ),
+        command(
+            ["set-gaps", "--bottom"],
+            name: .setGapBottom,
+            summary: "Set the runtime bottom outer gap.",
+            arguments: [pointsArgument]
         ),
         command(["balance-sizes"], name: .balanceSizes, summary: "Balance layout sizes in the active workspace."),
         command(

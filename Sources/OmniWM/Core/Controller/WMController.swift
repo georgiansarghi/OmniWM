@@ -452,6 +452,16 @@ final class WMController {
         workspaceManager.setOuterGaps(left: left, right: right, top: top, bottom: bottom)
     }
 
+    func setRuntimeOuterGap(left: Double? = nil, right: Double? = nil, top: Double? = nil, bottom: Double? = nil) {
+        let current = workspaceManager.outerGaps
+        workspaceManager.setOuterGaps(
+            left: left ?? Double(current.left),
+            right: right ?? Double(current.right),
+            top: top ?? Double(current.top),
+            bottom: bottom ?? Double(current.bottom)
+        )
+    }
+
     func borderSettingsChanged() {
         surfaceReconciler.noteWorldChanged()
     }
