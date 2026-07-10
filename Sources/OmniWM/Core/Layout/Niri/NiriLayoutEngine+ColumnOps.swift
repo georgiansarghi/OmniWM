@@ -459,6 +459,7 @@ extension NiriLayoutEngine {
             state: &state,
             workingFrame: workingFrame,
             gaps: gaps,
+            alignment: targetIdx < currentIdx ? .leading : .trailing,
             animationConfig: windowMovementAnimationConfig,
             fromContainerIndex: currentIdx
         )
@@ -943,6 +944,12 @@ extension NiriLayoutEngine {
         return true
     }
 
+    private enum ColumnViewportAlignment {
+        case automatic
+        case leading
+        case trailing
+    }
+
     private func ensureColumnVisible(
         _ column: NiriContainer,
         in workspaceId: WorkspaceDescriptor.ID,
@@ -950,9 +957,22 @@ extension NiriLayoutEngine {
         state: inout ViewportState,
         workingFrame: CGRect,
         gaps: CGFloat,
+        alignment: ColumnViewportAlignment = .automatic,
         animationConfig: SpringConfig? = nil,
         fromContainerIndex: Int? = nil
     ) {
+        let columns = columns(in: workspaceId)
+        guard let columnIndex = columnIndex(of: column, in: workspaceId) else { return }
+
+        let targetOffset: CGFloat? = switch alignment {
+        case .automatic:
+            nil
+        case .leading:
+            0
+        case .trailing:
+            min(0, workingFrame.width - column.cachedWidth)
+        }
+
         if let firstWindow = column.windowNodes.first {
             ensureSelectionVisible(
                 node: firstWindow,
@@ -965,5 +985,14 @@ extension NiriLayoutEngine {
                 fromContainerIndex: fromContainerIndex
             )
         }
+
+        guard let targetOffset, columns.indices.contains(columnIndex) else { return }
+        state.activeColumnIndex = columnIndex
+        state.animateToOffset(
+            targetOffset,
+            motion: motion,
+            config: animationConfig,
+            scale: displayScale(in: workspaceId)
+        )
     }
 }
