@@ -1645,7 +1645,7 @@ import QuartzCore
 
         controller.workspaceManager.withEngineMutationScope {
             for monitor in controller.workspaceManager.monitors {
-                let resolved = controller.settings.resolvedNiriSettings(for: monitor)
+                let resolved = controller.resolvedNiriSettings(for: monitor)
                 engine.updateMonitorSettings(resolved, for: monitor.id)
             }
         }

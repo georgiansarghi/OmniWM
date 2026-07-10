@@ -55,6 +55,7 @@ enum HotkeyCommand: Codable, Equatable, Hashable {
     case focusColumn(Int)
     case centerColumn
     case centerVisibleColumns
+    case toggleCenterFocusedColumn
     case cycleColumnWidthForward
     case cycleColumnWidthBackward
     case cycleWindowWidthForward

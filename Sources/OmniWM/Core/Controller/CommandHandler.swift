@@ -148,6 +148,8 @@ final class CommandHandler {
             controller.niriLayoutHandler.centerColumn()
         case .centerVisibleColumns:
             controller.niriLayoutHandler.centerVisibleColumns()
+        case .toggleCenterFocusedColumn:
+            toggleCenterFocusedColumn()
         case .cycleColumnWidthForward:
             layoutHandler(as: LayoutSizable.self)?.cycleSize(forward: true)
         case .cycleColumnWidthBackward:
@@ -232,6 +234,12 @@ final class CommandHandler {
 
     static func shouldIgnoreCommand(_ command: HotkeyCommand, isOverviewOpen: Bool) -> Bool {
         isOverviewOpen && command != .toggleOverview
+    }
+
+    private func toggleCenterFocusedColumn() {
+        guard let controller else { return }
+        let newValue: CenterFocusedColumn = controller.currentNiriCenterFocusedColumn() == .always ? .never : .always
+        controller.setRuntimeNiriCenterFocusedColumn(newValue)
     }
 
     private func layoutHandler<T>(as capability: T.Type) -> T? {

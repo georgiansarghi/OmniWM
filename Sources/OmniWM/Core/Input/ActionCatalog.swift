@@ -278,6 +278,14 @@ enum ActionCatalog {
                 category: .layout,
                 binding: .unassigned,
                 visibility: .advanced
+            ),
+            action(
+                id: "toggleCenterFocusedColumn",
+                command: .toggleCenterFocusedColumn,
+                category: .layout,
+                binding: KeyBinding(keyCode: UInt32(kVK_ANSI_C), modifiers: UInt32(optionKey | controlKey | cmdKey)),
+                visibility: .advanced,
+                keywords: ["center focused column", "toggle column centering"]
             )
         ])
 
@@ -941,7 +949,8 @@ enum ActionCatalog {
             .niri
 
         case .centerColumn,
-             .centerVisibleColumns:
+             .centerVisibleColumns,
+             .toggleCenterFocusedColumn:
             .niri
 
         case .focus,
@@ -1027,6 +1036,7 @@ enum ActionCatalog {
         case let .focusColumn(idx): "Focus Column \(idx + 1)"
         case .centerColumn: "Center Column"
         case .centerVisibleColumns: "Center Visible Columns"
+        case .toggleCenterFocusedColumn: "Toggle Center Focused Column"
         case .cycleColumnWidthForward: "Cycle Column Width Forward"
         case .cycleColumnWidthBackward: "Cycle Column Width Backward"
         case .cycleWindowWidthForward: "Cycle Window Width Forward"
@@ -1101,6 +1111,8 @@ enum ActionCatalog {
             .centerColumn
         case .centerVisibleColumns:
             .centerVisibleColumns
+        case .toggleCenterFocusedColumn:
+            nil
         case .move:
             .move
         case .moveWindowDown:

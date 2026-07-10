@@ -105,6 +105,7 @@ final class WMController {
     private var runtimeOuterGapRight: Double?
     private var runtimeOuterGapTop: Double?
     private var runtimeOuterGapBottom: Double?
+    private var runtimeNiriCenterFocusedColumn: CenterFocusedColumn?
 
     var niriEngine: NiriLayoutEngine? {
         get { workspaceManager.niriEngine }
@@ -482,6 +483,26 @@ final class WMController {
             right: Double(gaps.outerGapRight),
             top: Double(gaps.outerGapTop),
             bottom: Double(gaps.outerGapBottom)
+        )
+    }
+
+    func currentNiriCenterFocusedColumn() -> CenterFocusedColumn {
+        runtimeNiriCenterFocusedColumn ?? settings.niriCenterFocusedColumn
+    }
+
+    func setRuntimeNiriCenterFocusedColumn(_ value: CenterFocusedColumn?) {
+        runtimeNiriCenterFocusedColumn = value
+        updateNiriConfig(centerFocusedColumn: value ?? settings.niriCenterFocusedColumn)
+    }
+
+    func resolvedNiriSettings(for monitor: Monitor) -> ResolvedNiriSettings {
+        let base = settings.resolvedNiriSettings(for: monitor)
+        return ResolvedNiriSettings(
+            maxVisibleColumns: base.maxVisibleColumns,
+            centerFocusedColumn: runtimeNiriCenterFocusedColumn ?? base.centerFocusedColumn,
+            alwaysCenterSingleColumn: base.alwaysCenterSingleColumn,
+            singleWindowFit: base.singleWindowFit,
+            infiniteLoop: base.infiniteLoop
         )
     }
 
