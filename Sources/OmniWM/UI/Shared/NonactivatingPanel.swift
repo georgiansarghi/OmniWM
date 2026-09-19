@@ -13,10 +13,12 @@ final class NonactivatingPanel: NSPanel {
         false
     }
 
-    nonisolated static func frame(anchor: CGPoint, size: CGSize, screenVisibleFrame: CGRect) -> CGRect {
+    nonisolated static func frame(
+        anchor: CGPoint, size: CGSize, screenVisibleFrame: CGRect, opensUpward: Bool = false
+    ) -> CGRect {
         var frame = CGRect(
             x: anchor.x - size.width / 2,
-            y: anchor.y - 4 - size.height,
+            y: opensUpward ? anchor.y + 4 : anchor.y - 4 - size.height,
             width: size.width,
             height: size.height
         )

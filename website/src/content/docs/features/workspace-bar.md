@@ -23,6 +23,7 @@ Optionally show a System Stats button that opens a CPU, memory, GPU, disk, and u
 
 Configure position, height, and appearance in Settings:
 
+- **Position** — overlap the menu bar, sit below it, or use **Bottom** to anchor to the display's usable lower edge, above a visible Dock. Available globally and per display.
 - **Notch handling** — `Off`, `Move Below Menu Bar`, or a split layout (`Split — Active Left` / `Split — Active Right`) that flows the bar around the notch with your chosen side for the active workspace.
 - **Reveal on modifier hold** — keep the bar hidden until you hold a chosen modifier.
 - **Hide empty workspaces** — omit chips for workspaces with no windows.
@@ -30,6 +31,17 @@ Configure position, height, and appearance in Settings:
 - **Hide in Native Fullscreen** — hide the bar on a monitor while that monitor shows a macOS native fullscreen window, and bring it back on exit; reserved tiled layout space is left untouched so windows do not shuffle around the fullscreen session.
 - **Custom accent and text colors**.
 - **Per-monitor overrides** — change an individual display's bar independently.
+
+### Bottom placement
+
+```toml
+[workspaceBar]
+position = "bottom"
+```
+
+Bottom placement follows display geometry and Dock changes rather than relying on a large offset. X/Y offsets still apply (positive Y moves upward). **Reserve layout space** reserves the configured bar height at the bottom instead of the top; offsets do not change the reserved height. Visibility toggles, modifier reveal, and **Hide in Native Fullscreen** continue to apply. Stats and hidden-menu popups open above the bar.
+
+Notch modes, including **Fill Left of Notch**, are ignored at the bottom without changing your saved notch preference. Per-display `position` overrides use the same `"bottom"` value.
 
 ### Additional appearance controls
 

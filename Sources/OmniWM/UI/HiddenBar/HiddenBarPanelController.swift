@@ -7,6 +7,7 @@ import SwiftUI
 struct HiddenBarPanelPlacement: Equatable {
     let anchor: CGPoint
     let visibleFrame: CGRect
+    var opensUpward: Bool = false
 }
 
 @MainActor
@@ -68,6 +69,7 @@ final class HiddenBarPanelController {
         return CGPoint(
             x: monitor.frame.midX + CGFloat(resolved.xOffset),
             y: geometry.originY(for: monitor) + CGFloat(resolved.yOffset)
+                + (geometry.effectivePosition == .bottom ? geometry.barHeight : 0)
         )
     }
 
@@ -124,8 +126,12 @@ final class HiddenBarPanelController {
         )
     }
 
-    nonisolated static func panelFrame(anchor: CGPoint, size: CGSize, screenVisibleFrame: CGRect) -> CGRect {
-        NonactivatingPanel.frame(anchor: anchor, size: size, screenVisibleFrame: screenVisibleFrame)
+    nonisolated static func panelFrame(
+        anchor: CGPoint, size: CGSize, screenVisibleFrame: CGRect, opensUpward: Bool = false
+    ) -> CGRect {
+        NonactivatingPanel.frame(
+            anchor: anchor, size: size, screenVisibleFrame: screenVisibleFrame, opensUpward: opensUpward
+        )
     }
 
     private func show(placement: HiddenBarPanelPlacement, items: [HiddenBarGlyph]) {
@@ -182,7 +188,10 @@ final class HiddenBarPanelController {
             padding: Self.padding
         )
         panel.setFrame(
-            Self.panelFrame(anchor: placement.anchor, size: size, screenVisibleFrame: placement.visibleFrame),
+            Self.panelFrame(
+                anchor: placement.anchor, size: size, screenVisibleFrame: placement.visibleFrame,
+                opensUpward: placement.opensUpward
+            ),
             display: true
         )
     }

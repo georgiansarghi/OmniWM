@@ -34,6 +34,7 @@ struct WorkspaceBarGeometry: Equatable {
     let menuBarHeight: CGFloat
     let barHeight: CGFloat
     let reservedTopInset: CGFloat
+    let reservedBottomInset: CGFloat
 
     static func resolve(
         monitor: Monitor,
@@ -48,13 +49,14 @@ struct WorkspaceBarGeometry: Equatable {
             resolved: resolved
         )
         let barHeight = isFill ? resolvedMenuBarHeight : max(0, CGFloat(resolved.height))
-        let reservedTopInset = isFill ? 0 : (isVisible && resolved.reserveLayoutSpace ? barHeight : 0)
+        let reservedInset = isFill ? 0 : (isVisible && resolved.reserveLayoutSpace ? barHeight : 0)
 
         return WorkspaceBarGeometry(
             effectivePosition: effectivePosition,
             menuBarHeight: resolvedMenuBarHeight,
             barHeight: barHeight,
-            reservedTopInset: reservedTopInset
+            reservedTopInset: effectivePosition == .bottom ? 0 : reservedInset,
+            reservedBottomInset: effectivePosition == .bottom ? reservedInset : 0
         )
     }
 
@@ -153,7 +155,11 @@ struct WorkspaceBarGeometry: Equatable {
     }
 
     func originY(for monitor: Monitor) -> CGFloat {
-        effectivePosition == .belowMenuBar ? monitor.visibleFrame.maxY - barHeight : monitor.visibleFrame.maxY
+        switch effectivePosition {
+        case .overlappingMenuBar: monitor.visibleFrame.maxY
+        case .belowMenuBar: monitor.visibleFrame.maxY - barHeight
+        case .bottom: monitor.visibleFrame.minY
+        }
     }
 
     static func effectivePosition(

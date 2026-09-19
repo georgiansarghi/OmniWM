@@ -39,6 +39,7 @@ enum WorkspaceBarWindowLevel: String, CaseIterable, Codable, Identifiable {
 enum WorkspaceBarPosition: String, CaseIterable, Codable, Identifiable {
     case overlappingMenuBar
     case belowMenuBar
+    case bottom
 
     var id: String {
         rawValue
@@ -48,6 +49,7 @@ enum WorkspaceBarPosition: String, CaseIterable, Codable, Identifiable {
         switch self {
         case .overlappingMenuBar: "Overlapping Menu Bar"
         case .belowMenuBar: "Below Menu Bar"
+        case .bottom: "Bottom"
         }
     }
 }

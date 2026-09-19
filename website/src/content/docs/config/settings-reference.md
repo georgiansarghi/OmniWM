@@ -223,7 +223,7 @@ The per-monitor workspace bar. Per-monitor exceptions live in [`monitorBarOverri
 | `showLabels` | boolean | `true` | Shows workspace names next to their numbers. |
 | `showFloatingWindows` | boolean | `false` | Includes floating windows' icons in workspace pills. |
 | `windowLevel` | string | `"popup"` | Bar window level: `normal`, `floating`, `status`, `popup`, `screensaver`. |
-| `position` | string | `"overlappingMenuBar"` | `overlappingMenuBar` or `belowMenuBar`. |
+| `position` | string | `"overlappingMenuBar"` | `overlappingMenuBar`, `belowMenuBar`, or `bottom` (above a visible Dock; ignores notch modes). |
 | `notchMode` | string | `"moveBelowMenuBar"` | Notch handling: `off`, `moveBelowMenuBar`, `splitActiveLeft`, `splitActiveRight`, or `fillLeftOfNotch`. The last fills the menu-bar area left of the notch and covers app menus; without a notch it uses the left half of the menu bar. In this mode `position`, `xOffset`, `yOffset`, `height`, and `reserveLayoutSpace` are ignored: the bar uses the menu-bar height and reserves no layout space. |
 | `notchActiveZoneWidth` | float | `180.0` | Width in points of the active zone around the notch. |
 | `systemStatsButton` | boolean | `false` | Adds a system stats button to the bar. |

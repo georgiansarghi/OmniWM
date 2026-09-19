@@ -44,7 +44,9 @@ extension WMController {
         for monitor: Monitor,
         scale: CGFloat
     ) -> MonitorLayoutFrames {
-        let reservedTopInset = workspaceBarReservedTopInset(for: monitor)
+        let barGeometry = workspaceBarGeometry(for: monitor)
+        let reservedTopInset = barGeometry.reservedTopInset
+        let reservedBottomInset = barGeometry.reservedBottomInset
         let gaps = settings.gaps.resolved(for: monitor)
         let menuBarInset = max(0, monitor.frame.maxY - monitor.visibleFrame.maxY)
         let normalizedTop = normalizedTopStrut(
@@ -56,7 +58,7 @@ extension WMController {
             left: gaps.outerGapLeft,
             right: gaps.outerGapRight,
             top: normalizedTop,
-            bottom: gaps.outerGapBottom
+            bottom: gaps.outerGapBottom + reservedBottomInset
         )
         let clearance = borderClearance(scale: scale)
         let effectiveStruts = Struts(
@@ -82,7 +84,8 @@ extension WMController {
             borderSafeFillFrame = workingFrame
         } else {
             (fullscreenLayoutFrame, borderSafeFillFrame) = ungappedFullscreenFrames(
-                for: monitor, scale: scale, reservedTopInset: reservedTopInset, clearance: clearance
+                for: monitor, scale: scale, reservedTopInset: reservedTopInset,
+                reservedBottomInset: reservedBottomInset, clearance: clearance
             )
         }
         return MonitorLayoutFrames(
@@ -137,26 +140,27 @@ extension WMController {
         )
     }
 
-    private func workspaceBarReservedTopInset(for monitor: Monitor) -> CGFloat {
-        guard settings.workspaceBar.revealModifier == .off else { return 0 }
+    private func workspaceBarGeometry(for monitor: Monitor) -> WorkspaceBarGeometry {
         let resolved = settings.workspaceBar.resolved(for: monitor)
         return WorkspaceBarGeometry.resolve(
             monitor: monitor,
             resolved: resolved,
-            isVisible: isWorkspaceBarConfiguredVisible(on: monitor, resolved: resolved)
-        ).reservedTopInset
+            isVisible: settings.workspaceBar.revealModifier == .off
+                && isWorkspaceBarConfiguredVisible(on: monitor, resolved: resolved)
+        )
     }
 
     private func ungappedFullscreenFrames(
         for monitor: Monitor,
         scale: CGFloat,
         reservedTopInset: CGFloat,
+        reservedBottomInset: CGFloat,
         clearance: CGFloat
     ) -> (layout: CGRect, borderSafe: CGRect) {
         let layout = computeWorkingArea(
             parentArea: monitor.visibleFrame,
             scale: scale,
-            struts: Struts(top: reservedTopInset)
+            struts: Struts(top: reservedTopInset, bottom: reservedBottomInset)
         )
         let borderSafe = computeWorkingArea(
             parentArea: monitor.visibleFrame,
@@ -165,7 +169,7 @@ extension WMController {
                 left: clearance,
                 right: clearance,
                 top: max(reservedTopInset, clearance),
-                bottom: clearance
+                bottom: max(reservedBottomInset, clearance)
             )
         )
         return (layout, borderSafe)

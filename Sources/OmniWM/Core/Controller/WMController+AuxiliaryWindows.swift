@@ -35,7 +35,8 @@ extension WMController {
                 resolved: resolved,
                 barVisible: isWorkspaceBarVisible(on: monitor, resolved: resolved)
             ),
-            visibleFrame: monitor.visibleFrame
+            visibleFrame: monitor.visibleFrame,
+            opensUpward: resolved.position == .bottom && isWorkspaceBarVisible(on: monitor, resolved: resolved)
         )
     }
 
@@ -116,10 +117,15 @@ extension WMController {
         else {
             return
         }
+        let opensUpward = settings.workspaceBar.resolved(for: monitor).position == .bottom
+        let popupAnchor = opensUpward
+            ? CGPoint(x: anchor.x, y: workspaceBarManager.primaryBarFrame(on: monitorId)?.maxY ?? anchor.y)
+            : anchor
         systemStatsPopupController.toggle(
-            anchor: anchor,
+            anchor: popupAnchor,
             monitorId: monitorId,
-            screenVisibleFrame: monitor.visibleFrame
+            screenVisibleFrame: monitor.visibleFrame,
+            opensUpward: opensUpward
         )
     }
 

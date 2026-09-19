@@ -28,11 +28,11 @@ final class SystemStatsPopupController {
     private var eventMonitors: [Any] = []
     private var anchoredMonitorId: Monitor.ID?
 
-    func toggle(anchor: CGPoint, monitorId: Monitor.ID, screenVisibleFrame: CGRect) {
+    func toggle(anchor: CGPoint, monitorId: Monitor.ID, screenVisibleFrame: CGRect, opensUpward: Bool = false) {
         if isVisible {
             dismiss()
         } else {
-            show(anchor: anchor, monitorId: monitorId, screenVisibleFrame: screenVisibleFrame)
+            show(anchor: anchor, monitorId: monitorId, screenVisibleFrame: screenVisibleFrame, opensUpward: opensUpward)
         }
     }
 
@@ -53,21 +53,12 @@ final class SystemStatsPopupController {
         }
     }
 
-    nonisolated static func popupFrame(anchor: CGPoint, size: CGSize, screenVisibleFrame: CGRect) -> CGRect {
-        var frame = CGRect(
-            x: anchor.x - size.width / 2,
-            y: anchor.y - 4 - size.height,
-            width: size.width,
-            height: size.height
+    nonisolated static func popupFrame(
+        anchor: CGPoint, size: CGSize, screenVisibleFrame: CGRect, opensUpward: Bool = false
+    ) -> CGRect {
+        NonactivatingPanel.frame(
+            anchor: anchor, size: size, screenVisibleFrame: screenVisibleFrame, opensUpward: opensUpward
         )
-        let minX = screenVisibleFrame.minX + 8
-        let maxX = screenVisibleFrame.maxX - size.width - 8
-        frame.origin.x = maxX >= minX ? min(max(frame.origin.x, minX), maxX) : minX
-        frame.origin.y = min(
-            max(frame.origin.y, screenVisibleFrame.minY + 8),
-            screenVisibleFrame.maxY - size.height
-        )
-        return frame
     }
 
     static func targetMonitor(
@@ -79,7 +70,7 @@ final class SystemStatsPopupController {
         ([pointer, main].compactMap { $0 } + monitors).first { hasAnchor($0.id) }
     }
 
-    private func show(anchor: CGPoint, monitorId: Monitor.ID, screenVisibleFrame: CGRect) {
+    private func show(anchor: CGPoint, monitorId: Monitor.ID, screenVisibleFrame: CGRect, opensUpward: Bool) {
         let panel = self.panel ?? makePanel()
         self.panel = panel
         anchoredMonitorId = monitorId
@@ -88,7 +79,8 @@ final class SystemStatsPopupController {
             Self.popupFrame(
                 anchor: anchor,
                 size: SystemStatsView.preferredSize,
-                screenVisibleFrame: screenVisibleFrame
+                screenVisibleFrame: screenVisibleFrame,
+                opensUpward: opensUpward
             ),
             display: true
         )

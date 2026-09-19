@@ -681,6 +681,41 @@ final class GapSettingsTests: XCTestCase {
     }
 
     @MainActor
+    func testBottomBarReservationAppliesToTilingAndFullscreenAndReleasesWhenHidden() {
+        let settings = makeSettingsStore()
+        settings.gaps.outerGapLeft = 12
+        settings.gaps.outerGapRight = 12
+        settings.gaps.outerGapTop = 46
+        settings.gaps.outerGapBottom = 14
+        settings.workspaceBar.position = .bottom
+        settings.workspaceBar.reserveLayoutSpace = true
+        settings.workspaceBar.height = 24
+        let controller = WMController(settings: settings)
+        let monitor = Monitor(
+            id: .init(displayId: 1),
+            displayId: 1,
+            frame: CGRect(x: 0, y: 0, width: 1440, height: 900),
+            visibleFrame: CGRect(x: 0, y: 60, width: 1440, height: 800),
+            hasNotch: false,
+            name: "Built-in"
+        )
+        let workingFrame = CGRect(x: 12, y: 98, width: 1416, height: 756)
+        XCTAssertEqual(controller.insetWorkingFrame(for: monitor), workingFrame)
+        XCTAssertEqual(
+            controller.fullscreenLayoutFrame(for: monitor),
+            CGRect(x: 0, y: 84, width: 1440, height: 776)
+        )
+        settings.gaps.fullscreenUsesOuterGaps = true
+        XCTAssertEqual(controller.fullscreenLayoutFrame(for: monitor), workingFrame)
+        settings.gaps.fullscreenUsesOuterGaps = false
+        settings.workspaceBar.revealModifier = .option
+        XCTAssertEqual(controller.fullscreenLayoutFrame(for: monitor), monitor.visibleFrame)
+        settings.workspaceBar.revealModifier = .off
+        settings.workspaceBar.enabled = false
+        XCTAssertEqual(controller.fullscreenLayoutFrame(for: monitor), monitor.visibleFrame)
+    }
+
+    @MainActor
     func testFullscreenLayoutFrameUsesOuterGapsWhenPolicyEnabled() {
         let settings = makeSettingsStore()
         settings.gaps.outerGapLeft = 12
