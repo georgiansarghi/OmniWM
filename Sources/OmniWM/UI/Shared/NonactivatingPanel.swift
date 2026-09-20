@@ -14,22 +14,9 @@ final class NonactivatingPanel: NSPanel {
     }
 
     nonisolated static func frame(
-        anchor: CGPoint, size: CGSize, screenVisibleFrame: CGRect, opensUpward: Bool = false
+        anchor: CGPoint, size: CGSize, screenVisibleFrame: CGRect, edge: PopupAttachment.Edge = .below
     ) -> CGRect {
-        var frame = CGRect(
-            x: anchor.x - size.width / 2,
-            y: opensUpward ? anchor.y + 4 : anchor.y - 4 - size.height,
-            width: size.width,
-            height: size.height
-        )
-        let minX = screenVisibleFrame.minX + 8
-        let maxX = screenVisibleFrame.maxX - size.width - 8
-        frame.origin.x = maxX >= minX ? min(max(frame.origin.x, minX), maxX) : minX
-        frame.origin.y = min(
-            max(frame.origin.y, screenVisibleFrame.minY + 8),
-            screenVisibleFrame.maxY - size.height
-        )
-        return frame
+        PopupAttachment(anchor: anchor, edge: edge).frame(size: size, visibleFrame: screenVisibleFrame)
     }
 }
 

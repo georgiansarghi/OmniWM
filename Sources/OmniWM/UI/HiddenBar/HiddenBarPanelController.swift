@@ -5,9 +5,8 @@ import AppKit
 import SwiftUI
 
 struct HiddenBarPanelPlacement: Equatable {
-    let anchor: CGPoint
+    let attachment: PopupAttachment
     let visibleFrame: CGRect
-    var opensUpward: Bool = false
 }
 
 @MainActor
@@ -23,7 +22,7 @@ final class HiddenBarPanelController {
     var isExemptWindow: ((NSWindow) -> Bool)?
 
     private let model = HiddenBarPanelModel()
-    private var panel: NonactivatingPanel?
+    private(set) var panel: NonactivatingPanel?
     private let dismissalMonitor = PanelDismissalMonitor()
     private var lastPlacement: HiddenBarPanelPlacement?
     private weak var previousKeyWindow: NSWindow?
@@ -55,22 +54,6 @@ final class HiddenBarPanelController {
                 keyWindow.makeFirstResponder(firstResponder)
             }
         }
-    }
-
-    nonisolated static func panelAnchor(
-        monitor: Monitor,
-        resolved: ResolvedBarSettings,
-        barVisible: Bool
-    ) -> CGPoint {
-        guard barVisible else {
-            return CGPoint(x: monitor.frame.midX, y: monitor.visibleFrame.maxY)
-        }
-        let geometry = WorkspaceBarGeometry.resolve(monitor: monitor, resolved: resolved, isVisible: true)
-        return CGPoint(
-            x: monitor.frame.midX + CGFloat(resolved.xOffset),
-            y: geometry.originY(for: monitor) + CGFloat(resolved.yOffset)
-                + (geometry.effectivePosition == .bottom ? geometry.barHeight : 0)
-        )
     }
 
     nonisolated static func glyphDisplayWidth(for size: CGSize, rowHeight: CGFloat) -> CGFloat {
@@ -127,10 +110,10 @@ final class HiddenBarPanelController {
     }
 
     nonisolated static func panelFrame(
-        anchor: CGPoint, size: CGSize, screenVisibleFrame: CGRect, opensUpward: Bool = false
+        anchor: CGPoint, size: CGSize, screenVisibleFrame: CGRect, edge: PopupAttachment.Edge = .below
     ) -> CGRect {
         NonactivatingPanel.frame(
-            anchor: anchor, size: size, screenVisibleFrame: screenVisibleFrame, opensUpward: opensUpward
+            anchor: anchor, size: size, screenVisibleFrame: screenVisibleFrame, edge: edge
         )
     }
 
@@ -188,10 +171,7 @@ final class HiddenBarPanelController {
             padding: Self.padding
         )
         panel.setFrame(
-            Self.panelFrame(
-                anchor: placement.anchor, size: size, screenVisibleFrame: placement.visibleFrame,
-                opensUpward: placement.opensUpward
-            ),
+            placement.attachment.frame(size: size, visibleFrame: placement.visibleFrame),
             display: true
         )
     }

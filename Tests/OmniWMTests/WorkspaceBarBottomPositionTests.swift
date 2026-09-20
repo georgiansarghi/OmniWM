@@ -46,7 +46,7 @@ final class WorkspaceBarBottomPositionTests: XCTestCase {
             let geometry = WorkspaceBarGeometry.resolve(monitor: monitor, resolved: resolved, isVisible: true)
             XCTAssertEqual(geometry.effectivePosition, .bottom)
             XCTAssertEqual(
-                geometry.frame(fittingWidth: 200, monitor: monitor, resolved: resolved),
+                geometry.frame(fittingLength: 200, monitor: monitor, resolved: resolved),
                 CGRect(x: -808, y: bottom + 6, width: 200, height: 30)
             )
         }
@@ -64,8 +64,8 @@ final class WorkspaceBarBottomPositionTests: XCTestCase {
                 let geometry = WorkspaceBarGeometry.resolve(
                     monitor: monitor, resolved: settings.resolved(for: monitor), isVisible: visible
                 )
-                XCTAssertEqual(geometry.reservedTopInset, 0)
-                XCTAssertEqual(geometry.reservedBottomInset, reserve && visible ? 30 : 0)
+                XCTAssertEqual(geometry.reservedInsets.top, 0)
+                XCTAssertEqual(geometry.reservedInsets.bottom, reserve && visible ? 30 : 0)
             }
         }
         settings.position = .belowMenuBar
@@ -73,8 +73,8 @@ final class WorkspaceBarBottomPositionTests: XCTestCase {
         let geometry = WorkspaceBarGeometry.resolve(
             monitor: monitor, resolved: settings.resolved(for: monitor), isVisible: true
         )
-        XCTAssertEqual(geometry.reservedTopInset, 30)
-        XCTAssertEqual(geometry.reservedBottomInset, 0)
+        XCTAssertEqual(geometry.reservedInsets.top, 30)
+        XCTAssertEqual(geometry.reservedInsets.bottom, 0)
     }
 
     @MainActor
@@ -105,23 +105,21 @@ final class WorkspaceBarBottomPositionTests: XCTestCase {
         settings.position = .bottom
         settings.height = 30
         let monitor = monitor()
-        let anchor = HiddenBarPanelController.panelAnchor(
-            monitor: monitor, resolved: settings.resolved(for: monitor), barVisible: true
-        )
+        let resolved = settings.resolved(for: monitor)
+        let geometry = WorkspaceBarGeometry.resolve(monitor: monitor, resolved: resolved, isVisible: true)
+        let anchor = PopupAttachment(
+            sourceFrame: geometry.frame(fittingLength: 200, monitor: monitor, resolved: resolved), edge: .above
+        ).anchor
         XCTAssertEqual(anchor.y, monitor.visibleFrame.minY + 30)
         let size = CGSize(width: 300, height: 200)
         let hiddenFrame = HiddenBarPanelController.panelFrame(
-            anchor: anchor, size: size, screenVisibleFrame: monitor.visibleFrame, opensUpward: true
+            anchor: anchor, size: size, screenVisibleFrame: monitor.visibleFrame, edge: .above
         )
         let statsFrame = SystemStatsPopupController.popupFrame(
-            anchor: anchor, size: size, screenVisibleFrame: monitor.visibleFrame, opensUpward: true
+            anchor: anchor, size: size, screenVisibleFrame: monitor.visibleFrame, edge: .above
         )
         XCTAssertEqual(hiddenFrame.minY, anchor.y + 4)
         XCTAssertEqual(statsFrame, hiddenFrame)
         XCTAssertTrue(monitor.visibleFrame.contains(statsFrame))
-        let hiddenBarAnchor = HiddenBarPanelController.panelAnchor(
-            monitor: monitor, resolved: settings.resolved(for: monitor), barVisible: false
-        )
-        XCTAssertEqual(hiddenBarAnchor.y, monitor.visibleFrame.maxY)
     }
 }

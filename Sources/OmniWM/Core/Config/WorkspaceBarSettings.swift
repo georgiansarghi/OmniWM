@@ -249,7 +249,7 @@ final class WorkspaceBarSettings {
             hideEmptyWorkspaces: override?.hideEmptyWorkspaces ?? hideEmptyWorkspaces,
             excludedBundleIDs: excludedBundleIDs,
             reserveLayoutSpace: override?.reserveLayoutSpace ?? reserveLayoutSpace,
-            notchMode: position == .bottom ? .off : (override?.notchMode ?? notchMode),
+            notchMode: position.usesNotch ? (override?.notchMode ?? notchMode) : .off,
             notchActiveZoneWidth: override?.notchActiveZoneWidth ?? notchActiveZoneWidth,
             systemStatsButton: systemStatsButton,
             position: position,

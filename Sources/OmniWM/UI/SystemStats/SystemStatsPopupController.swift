@@ -22,17 +22,17 @@ final class SystemStatsPopupController {
     var isToggleSourceWindow: (@MainActor (NSWindow) -> Bool)?
 
     private(set) var isVisible = false
-    private var panel: SystemStatsPopupPanel?
+    private(set) var panel: SystemStatsPopupPanel?
     private let model = SystemStatsModel()
     private var refreshTask: Task<Void, Never>?
     private var eventMonitors: [Any] = []
     private var anchoredMonitorId: Monitor.ID?
 
-    func toggle(anchor: CGPoint, monitorId: Monitor.ID, screenVisibleFrame: CGRect, opensUpward: Bool = false) {
+    func toggle(attachment: PopupAttachment, monitorId: Monitor.ID, screenVisibleFrame: CGRect) {
         if isVisible {
             dismiss()
         } else {
-            show(anchor: anchor, monitorId: monitorId, screenVisibleFrame: screenVisibleFrame, opensUpward: opensUpward)
+            show(attachment: attachment, monitorId: monitorId, screenVisibleFrame: screenVisibleFrame)
         }
     }
 
@@ -54,10 +54,10 @@ final class SystemStatsPopupController {
     }
 
     nonisolated static func popupFrame(
-        anchor: CGPoint, size: CGSize, screenVisibleFrame: CGRect, opensUpward: Bool = false
+        anchor: CGPoint, size: CGSize, screenVisibleFrame: CGRect, edge: PopupAttachment.Edge = .below
     ) -> CGRect {
         NonactivatingPanel.frame(
-            anchor: anchor, size: size, screenVisibleFrame: screenVisibleFrame, opensUpward: opensUpward
+            anchor: anchor, size: size, screenVisibleFrame: screenVisibleFrame, edge: edge
         )
     }
 
@@ -70,18 +70,13 @@ final class SystemStatsPopupController {
         ([pointer, main].compactMap { $0 } + monitors).first { hasAnchor($0.id) }
     }
 
-    private func show(anchor: CGPoint, monitorId: Monitor.ID, screenVisibleFrame: CGRect, opensUpward: Bool) {
+    private func show(attachment: PopupAttachment, monitorId: Monitor.ID, screenVisibleFrame: CGRect) {
         let panel = self.panel ?? makePanel()
         self.panel = panel
         anchoredMonitorId = monitorId
         model.snapshot = nil
         panel.setFrame(
-            Self.popupFrame(
-                anchor: anchor,
-                size: SystemStatsView.preferredSize,
-                screenVisibleFrame: screenVisibleFrame,
-                opensUpward: opensUpward
-            ),
+            attachment.frame(size: SystemStatsView.preferredSize, visibleFrame: screenVisibleFrame),
             display: true
         )
         OwnedWindowRegistry.shared.register(

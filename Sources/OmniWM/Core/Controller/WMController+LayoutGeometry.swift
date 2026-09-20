@@ -44,21 +44,19 @@ extension WMController {
         for monitor: Monitor,
         scale: CGFloat
     ) -> MonitorLayoutFrames {
-        let barGeometry = workspaceBarGeometry(for: monitor)
-        let reservedTopInset = barGeometry.reservedTopInset
-        let reservedBottomInset = barGeometry.reservedBottomInset
+        let reserved = workspaceBarGeometry(for: monitor).reservedInsets
         let gaps = settings.gaps.resolved(for: monitor)
         let menuBarInset = max(0, monitor.frame.maxY - monitor.visibleFrame.maxY)
         let normalizedTop = normalizedTopStrut(
             top: gaps.outerGapTop,
             menuBarInset: menuBarInset,
-            reservedTopInset: reservedTopInset
+            reservedTopInset: reserved.top
         )
         let rawStruts = Struts(
-            left: gaps.outerGapLeft,
-            right: gaps.outerGapRight,
+            left: gaps.outerGapLeft + reserved.left,
+            right: gaps.outerGapRight + reserved.right,
             top: normalizedTop,
-            bottom: gaps.outerGapBottom + reservedBottomInset
+            bottom: gaps.outerGapBottom + reserved.bottom
         )
         let clearance = borderClearance(scale: scale)
         let effectiveStruts = Struts(
@@ -84,8 +82,7 @@ extension WMController {
             borderSafeFillFrame = workingFrame
         } else {
             (fullscreenLayoutFrame, borderSafeFillFrame) = ungappedFullscreenFrames(
-                for: monitor, scale: scale, reservedTopInset: reservedTopInset,
-                reservedBottomInset: reservedBottomInset, clearance: clearance
+                for: monitor, scale: scale, reserved: reserved, clearance: clearance
             )
         }
         return MonitorLayoutFrames(
@@ -153,23 +150,22 @@ extension WMController {
     private func ungappedFullscreenFrames(
         for monitor: Monitor,
         scale: CGFloat,
-        reservedTopInset: CGFloat,
-        reservedBottomInset: CGFloat,
+        reserved: Struts,
         clearance: CGFloat
     ) -> (layout: CGRect, borderSafe: CGRect) {
         let layout = computeWorkingArea(
             parentArea: monitor.visibleFrame,
             scale: scale,
-            struts: Struts(top: reservedTopInset, bottom: reservedBottomInset)
+            struts: reserved
         )
         let borderSafe = computeWorkingArea(
             parentArea: monitor.visibleFrame,
             scale: scale,
             struts: Struts(
-                left: clearance,
-                right: clearance,
-                top: max(reservedTopInset, clearance),
-                bottom: max(reservedBottomInset, clearance)
+                left: max(reserved.left, clearance),
+                right: max(reserved.right, clearance),
+                top: max(reserved.top, clearance),
+                bottom: max(reserved.bottom, clearance)
             )
         )
         return (layout, borderSafe)
