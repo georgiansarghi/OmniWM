@@ -2,7 +2,6 @@
 // Copyright (C) 2026 BarutSRB — https://github.com/OmniNull/OmniWM
 
 import CoreGraphics
-import Foundation
 
 struct WorkspaceBarHoverTarget {
     let id: Monitor.ID
@@ -38,48 +37,18 @@ struct WorkspaceBarHoverTarget {
 }
 
 struct WorkspaceBarHoverState {
-    static let revealDelay: TimeInterval = 0.15
-    static let hideDelay: TimeInterval = 0.4
-
-    private struct Pending {
-        let reveal: Bool
-        let deadline: TimeInterval
-    }
-
     private(set) var revealed: Set<Monitor.ID> = []
-    private var pending: [Monitor.ID: Pending] = [:]
 
-    var nextDeadline: TimeInterval? {
-        pending.values.map(\.deadline).min()
-    }
-
-    mutating func update(targets: [WorkspaceBarHoverTarget], pointer: CGPoint, now: TimeInterval) {
-        let ids = Set(targets.map(\.id))
-        revealed.formIntersection(ids)
-        pending = pending.filter { ids.contains($0.key) }
-        for target in targets {
-            let wasRevealed = revealed.contains(target.id)
+    mutating func update(targets: [WorkspaceBarHoverTarget], pointer: CGPoint) {
+        revealed = Set(targets.filter { target in
             let insideActivation = target.activationRegions.contains { $0.contains(pointer) }
-            let keepVisible = (wasRevealed || target.isVisible)
+            let keepVisible = (revealed.contains(target.id) || target.isVisible)
                 && (target.isPinned || target.retentionRegions.contains { $0.contains(pointer) })
-            let desired = insideActivation || keepVisible
-            if desired == wasRevealed {
-                pending.removeValue(forKey: target.id)
-                continue
-            }
-            let delay = desired ? (target.isVisible ? 0 : Self.revealDelay) : Self.hideDelay
-            if pending[target.id]?.reveal != desired || (desired && target.isVisible) {
-                pending[target.id] = Pending(reveal: desired, deadline: now + delay)
-            }
-            if let transition = pending[target.id], now >= transition.deadline {
-                if desired { revealed.insert(target.id) } else { revealed.remove(target.id) }
-                pending.removeValue(forKey: target.id)
-            }
-        }
+            return insideActivation || keepVisible
+        }.map(\.id))
     }
 
     mutating func reset() {
         revealed = []
-        pending = [:]
     }
 }

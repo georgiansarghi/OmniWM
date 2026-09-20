@@ -22,70 +22,54 @@ final class WorkspaceBarHoverStateTests: XCTestCase {
         )
     }
 
-    func testRevealDelayIsNotRestartedByMotionAndBriefPassDoesNotReveal() {
+    func testRevealAndHideBothHappenOnTheFirstPointerUpdate() {
         var state = WorkspaceBarHoverState()
-        state.update(targets: [target()], pointer: near, now: 0)
-        XCTAssertTrue(state.revealed.isEmpty)
-        XCTAssertEqual(state.nextDeadline, 0.15)
-        state.update(targets: [target()], pointer: near, now: 0.1)
-        XCTAssertEqual(state.nextDeadline, 0.15)
-        state.update(targets: [target()], pointer: away, now: 0.12)
-        XCTAssertNil(state.nextDeadline)
-        state.update(targets: [target()], pointer: near, now: 1)
-        state.update(targets: [target()], pointer: near, now: 1.16)
+        state.update(targets: [target()], pointer: near)
         XCTAssertEqual(state.revealed, [monitor.id])
-        XCTAssertNil(state.nextDeadline)
+        state.update(targets: [target(visible: true)], pointer: away)
+        XCTAssertTrue(state.revealed.isEmpty)
+        state.update(targets: [target()], pointer: near)
+        XCTAssertEqual(state.revealed, [monitor.id])
     }
 
-    func testHideDelayRetentionMarginAndReentryPreventFlicker() {
+    func testRetentionMarginPreventsFlickerWithoutDelayingHide() {
         var state = WorkspaceBarHoverState()
-        state.update(targets: [target(visible: true)], pointer: near, now: 0)
+        state.update(targets: [target()], pointer: near)
         let margin = CGPoint(x: frame.minX - 15, y: frame.midY)
-        state.update(targets: [target(visible: true)], pointer: margin, now: 1)
+        state.update(targets: [target(visible: true)], pointer: margin)
         XCTAssertEqual(state.revealed, [monitor.id])
-        XCTAssertNil(state.nextDeadline)
-        state.update(targets: [target(visible: true)], pointer: away, now: 2)
-        XCTAssertEqual(state.nextDeadline, 2.4)
-        state.update(targets: [target(visible: true)], pointer: near, now: 2.3)
-        XCTAssertNil(state.nextDeadline)
-        state.update(targets: [target(visible: true)], pointer: away, now: 3)
-        state.update(targets: [target(visible: true)], pointer: away, now: 3.41)
+        state.update(targets: [target(visible: true)], pointer: away)
+        XCTAssertTrue(state.revealed.isEmpty)
+        state.update(targets: [target()], pointer: margin)
         XCTAssertTrue(state.revealed.isEmpty)
     }
 
     func testPopupPinsVisibleBarButDoesNotRevealHiddenBar() {
         var state = WorkspaceBarHoverState()
-        state.update(targets: [target(pinned: true)], pointer: away, now: 0)
+        state.update(targets: [target(pinned: true)], pointer: away)
         XCTAssertTrue(state.revealed.isEmpty)
-        state.update(targets: [target(visible: true, pinned: true)], pointer: away, now: 1)
+        state.update(targets: [target(visible: true, pinned: true)], pointer: away)
         XCTAssertEqual(state.revealed, [monitor.id])
-        state.update(targets: [target(visible: true, pinned: true)], pointer: away, now: 10)
-        XCTAssertNil(state.nextDeadline)
-        state.update(targets: [target(visible: true)], pointer: away, now: 11)
-        state.update(targets: [target(visible: true)], pointer: away, now: 11.41)
+        state.update(targets: [target(visible: true)], pointer: away)
         XCTAssertTrue(state.revealed.isEmpty)
     }
 
-    func testAlreadyVisiblePopupCancelsAnOutstandingRevealDelayImmediately() {
+    func testOpeningPopupWhileLeavingBarKeepsItRevealed() {
         var state = WorkspaceBarHoverState()
-        state.update(targets: [target()], pointer: near, now: 0)
-        XCTAssertEqual(state.nextDeadline, 0.15)
-        state.update(targets: [target(visible: true, pinned: true)], pointer: away, now: 0.01)
+        state.update(targets: [target()], pointer: near)
+        state.update(targets: [target(visible: true, pinned: true)], pointer: away)
         XCTAssertEqual(state.revealed, [monitor.id])
-        XCTAssertNil(state.nextDeadline)
     }
 
-    func testRemovingDisplayOrDisablingEligibilityCancelsPendingAndActiveReveal() {
+    func testRemovingDisplayOrDisablingEligibilityClearsRevealImmediately() {
         var state = WorkspaceBarHoverState()
-        state.update(targets: [target()], pointer: near, now: 0)
-        state.update(targets: [], pointer: near, now: 0.1)
-        XCTAssertNil(state.nextDeadline)
-        state.update(targets: [target(visible: true)], pointer: near, now: 1)
+        state.update(targets: [target()], pointer: near)
+        state.update(targets: [], pointer: near)
+        XCTAssertTrue(state.revealed.isEmpty)
+        state.update(targets: [target(visible: true)], pointer: near)
         XCTAssertFalse(state.revealed.isEmpty)
-        state.update(targets: [], pointer: near, now: 2)
-        XCTAssertTrue(state.revealed.isEmpty)
         state.reset()
-        XCTAssertNil(state.nextDeadline)
+        XCTAssertTrue(state.revealed.isEmpty)
     }
 
     func testDisplaysRevealIndependentlyWithoutTriggeringTheWholeEdge() {
@@ -100,14 +84,12 @@ final class WorkspaceBarHoverStateTests: XCTestCase {
         )
         var state = WorkspaceBarHoverState()
         let targets = [target(), otherTarget]
-        state.update(targets: targets, pointer: CGPoint(x: -950, y: -740), now: 0)
-        XCTAssertNil(state.nextDeadline)
-        state.update(targets: targets, pointer: near, now: 1)
-        state.update(targets: targets, pointer: near, now: 1.16)
+        state.update(targets: targets, pointer: CGPoint(x: -950, y: -740))
+        XCTAssertTrue(state.revealed.isEmpty)
+        state.update(targets: targets, pointer: near)
         XCTAssertEqual(state.revealed, [monitor.id])
         let otherPointer = CGPoint(x: near.x + 1000, y: near.y)
-        state.update(targets: targets, pointer: otherPointer, now: 2)
-        state.update(targets: targets, pointer: otherPointer, now: 2.41)
+        state.update(targets: targets, pointer: otherPointer)
         XCTAssertEqual(state.revealed, [other.id])
     }
 
@@ -137,15 +119,14 @@ final class WorkspaceBarHoverStateTests: XCTestCase {
             associatedFrames: [icon]
         )
         let pointer = CGPoint(x: icon.midX, y: icon.midY)
-        state.update(targets: [hidden], pointer: pointer, now: 0)
+        state.update(targets: [hidden], pointer: pointer)
         XCTAssertTrue(state.revealed.isEmpty)
         let visible = WorkspaceBarHoverTarget(
             monitor: monitor, frames: [frame], position: .bottom, isVisible: true, isPinned: false,
             associatedFrames: [icon]
         )
-        state.update(targets: [visible], pointer: pointer, now: 1)
+        state.update(targets: [visible], pointer: pointer)
         XCTAssertEqual(state.revealed, [monitor.id])
-        XCTAssertNil(state.nextDeadline)
     }
 
     func testSplitIslandsDoNotActivateInTheNotchGap() {

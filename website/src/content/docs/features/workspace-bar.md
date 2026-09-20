@@ -63,13 +63,13 @@ Enable **Auto-Hide on Pointer Leave** globally or in a display's workspace-bar s
 autoHide = true
 ```
 
-The bar appears after the pointer stays near its hidden location or the corresponding edge segment for **150 ms**. Only the bar's portion of the edge activates it, not the entire display edge. Offsets are respected; the activation region connects the bar to its display edge. Bottom and side bars use the usable edge above/beside a visible Dock.
+The bar appears **immediately** when the pointer enters its hidden location or the corresponding edge segment. Only the bar's portion of the edge activates it, not the entire display edge. Offsets are respected; the activation region connects the bar to its display edge. Bottom and side bars use the usable edge above/beside a visible Dock.
 
-After revealing, a larger keep-open margin and a **400 ms** hide delay prevent flickering while moving across the bar. The bar stays visible while using its stats popup, hidden-icon panel, status menu, or grouped-window sheet. Moving between displays reveals each bar independently. Hidden panels are reused; an idle hidden bar does not poll the mouse.
+After revealing, a larger keep-open margin prevents flickering while moving across the bar. Leaving this area hides the bar **immediately**. The bar stays visible while using its stats popup, hidden-icon panel, status menu, or grouped-window sheet. Moving between displays reveals each bar independently. Hidden panels are reused; an idle hidden bar does not poll the mouse.
 
 Auto-hide is **overlay-only**, even if **Reserve layout space** is checked: tiled and layout-fullscreen windows do not resize on reveal/hide. An optional reveal modifier is an alternative way to show the bar. Disabling the bar, manually toggling its visibility off, or suppressing it in native fullscreen takes precedence over both hover and modifier reveal.
 
-These delays and margins are fixed in this first version. Reveal/hide is immediate after the delay, without a sliding animation. macOS may also reveal its own Dock or menu bar when the pointer reaches the same edge.
+Both reveal and hide delays are **zero**, with no sliding animation. The hover margins remain fixed in this first version. macOS may also reveal its own Dock or menu bar when the pointer reaches the same edge.
 
 ### Additional appearance controls
 

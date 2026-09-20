@@ -12,8 +12,6 @@ final class WorkspaceBarHoverMonitor {
     private var localMonitor: Any?
     private var globalMonitor: Any?
     private var observers: [NSObjectProtocol] = []
-    private var transitionTask: Task<Void, Never>?
-    private var scheduledDeadline: TimeInterval?
     private(set) var isRunning = false
 
     func start() {
@@ -56,8 +54,7 @@ final class WorkspaceBarHoverMonitor {
     func refresh() {
         guard isRunning else { return }
         let previous = state.revealed
-        state.update(targets: targets(), pointer: pointer(), now: ProcessInfo.processInfo.systemUptime)
-        scheduleTransition()
+        state.update(targets: targets(), pointer: pointer())
         if previous != state.revealed { onRevealChanged() }
     }
 
@@ -69,29 +66,8 @@ final class WorkspaceBarHoverMonitor {
         globalMonitor = nil
         for observer in observers { NotificationCenter.default.removeObserver(observer) }
         observers = []
-        transitionTask?.cancel()
-        transitionTask = nil
-        scheduledDeadline = nil
         let hadReveal = !state.revealed.isEmpty
         state.reset()
         if hadReveal { onRevealChanged() }
-    }
-
-    private func scheduleTransition() {
-        guard scheduledDeadline != state.nextDeadline else { return }
-        transitionTask?.cancel()
-        scheduledDeadline = state.nextDeadline
-        guard let deadline = scheduledDeadline else {
-            transitionTask = nil
-            return
-        }
-        let delay = max(0, deadline - ProcessInfo.processInfo.systemUptime)
-        transitionTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(delay))
-            guard let self, !Task.isCancelled else { return }
-            scheduledDeadline = nil
-            transitionTask = nil
-            refresh()
-        }
     }
 }

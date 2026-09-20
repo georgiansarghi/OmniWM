@@ -84,7 +84,7 @@ struct MonitorBarSettingsSection: View {
                 onChange: { newValue in updateSetting { $0.autoHide = newValue } },
                 onReset: { updateSetting { $0.autoHide = nil } }
             )
-            .help("Reveal near the bar after 150 ms; hide after 400 ms away. "
+            .help("Reveal immediately near the bar; hide immediately when the pointer leaves its keep-open area. "
                 + "Stays open for popups and never reserves layout space.")
 
             OverridablePicker(

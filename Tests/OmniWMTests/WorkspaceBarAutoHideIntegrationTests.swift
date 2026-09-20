@@ -17,7 +17,7 @@ final class WorkspaceBarAutoHideIntegrationTests: XCTestCase {
         XCTAssertNotNil(fixture.manager.primaryDisplayedFrame(on: fixture.monitor.id))
         fixture.pointer = fixture.panel.frame.center
         fixture.manager.refreshHover()
-        try await fixture.waitForReveal(true)
+        XCTAssertTrue(fixture.manager.isHoverRevealed(on: fixture.monitor.id))
         fixture.apply()
         XCTAssertTrue(fixture.panel.isVisible)
         XCTAssertEqual(fixture.panelCount, 1)
@@ -28,7 +28,7 @@ final class WorkspaceBarAutoHideIntegrationTests: XCTestCase {
         XCTAssertEqual(fixture.controller.fullscreenLayoutFrame(for: fixture.monitor), fixture.monitor.visibleFrame)
         fixture.pointer = fixture.monitor.frame.center
         fixture.manager.refreshHover()
-        try await fixture.waitForReveal(false)
+        XCTAssertFalse(fixture.manager.isHoverRevealed(on: fixture.monitor.id))
         fixture.apply()
         XCTAssertFalse(fixture.panel.isVisible)
         XCTAssertNil(fixture.manager.statsAnchor(on: fixture.monitor.id))
@@ -134,7 +134,7 @@ final class WorkspaceBarAutoHideIntegrationTests: XCTestCase {
         ))
     }
 
-    func testCleanupCancelsPendingRevealAndRemovesRetainedPanel() async throws {
+    func testCleanupRemovesRetainedPanelAndPreventsLateReveal() async throws {
         let fixture = try Fixture()
         defer { fixture.cleanup() }
         fixture.apply()

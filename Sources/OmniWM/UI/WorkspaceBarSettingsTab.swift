@@ -101,8 +101,10 @@ private struct GlobalBarSettingsSection: View {
                     .onChange(of: settings.workspaceBar.autoHide) { _, _ in
                         controller.updateWorkspaceBarSettings()
                     }
-                    .help("Reveal near the bar after 150 ms; hide after 400 ms away. "
-                        + "Stays open for popups and never reserves layout space.")
+                    .help(
+                        "Reveal immediately near the bar; hide immediately when the pointer leaves its keep-open area. "
+                            + "Stays open for popups and never reserves layout space."
+                    )
 
                 Picker("Reveal on Modifier Hold", selection: Bindable(settings.workspaceBar).revealModifier) {
                     ForEach(WorkspaceBarRevealModifier.allCases, id: \.self) { modifier in

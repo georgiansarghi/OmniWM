@@ -19,24 +19,26 @@ final class WorkspaceBarHoverMonitorTests: XCTestCase {
         )
     }
 
-    func testStationaryPointerRevealsOnDeadlineAndStopResets() async {
+    func testRevealAndHideNotifySynchronouslyWithoutDuplicateNotifications() {
         let monitor = WorkspaceBarHoverMonitor()
+        defer { monitor.stop() }
         let target = target()
         monitor.targets = { [target] }
         monitor.pointer = { CGPoint(x: 500, y: 1) }
-        let revealed = expectation(description: "Reveal without another mouse event")
-        monitor.onRevealChanged = { if !monitor.state.revealed.isEmpty { revealed.fulfill() } }
+        var callbacks = 0
+        monitor.onRevealChanged = { callbacks += 1 }
         monitor.start()
-        await fulfillment(of: [revealed], timeout: 2)
         XCTAssertEqual(monitor.state.revealed, [target.id])
-        monitor.stop()
-        XCTAssertFalse(monitor.isRunning)
+        XCTAssertEqual(callbacks, 1)
+        monitor.refresh()
+        XCTAssertEqual(callbacks, 1)
+        monitor.pointer = { CGPoint(x: 500, y: 400) }
+        monitor.refresh()
         XCTAssertTrue(monitor.state.revealed.isEmpty)
-        XCTAssertNil(monitor.state.nextDeadline)
-        monitor.onRevealChanged = {}
+        XCTAssertEqual(callbacks, 2)
     }
 
-    func testStopAndRestartCannotFireTheOldDeadline() async throws {
+    func testStopResetsAndRestartUsesCurrentPointer() {
         let monitor = WorkspaceBarHoverMonitor()
         defer { monitor.stop() }
         let target = target()
@@ -46,11 +48,14 @@ final class WorkspaceBarHoverMonitorTests: XCTestCase {
         monitor.onRevealChanged = { callbacks += 1 }
         monitor.start()
         monitor.stop()
+        XCTAssertFalse(monitor.isRunning)
+        XCTAssertTrue(monitor.state.revealed.isEmpty)
+        XCTAssertEqual(callbacks, 2)
+        monitor.refresh()
+        XCTAssertEqual(callbacks, 2)
         monitor.pointer = { CGPoint(x: 500, y: 400) }
         monitor.start()
-        try await Task.sleep(for: .milliseconds(250))
         XCTAssertTrue(monitor.state.revealed.isEmpty)
-        XCTAssertEqual(callbacks, 0)
-        XCTAssertNil(monitor.state.nextDeadline)
+        XCTAssertEqual(callbacks, 2)
     }
 }
