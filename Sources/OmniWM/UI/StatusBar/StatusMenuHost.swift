@@ -46,6 +46,7 @@ final class StatusMenuHost {
     private var rootScrollOrigin = CGPoint.zero
     private(set) var isVisible = false
     var isExemptWindow: (NSWindow) -> Bool = { _ in false }
+    var onVisibilityChanged: (() -> Void)?
 
     var panel: NonactivatingPanel? {
         root?.window
@@ -92,6 +93,7 @@ final class StatusMenuHost {
         register(root.window, surfaceId: Self.surfaceId)
         focusPolicyEngine.beginLease(owner: .statusPanel, reason: "status_panel", duration: nil)
         root.window.makeKeyAndOrderFront(nil)
+        onVisibilityChanged?()
         dismissalMonitor.start(
             panels: [root.window],
             isExemptWindow: { [weak self] in self?.isExemptWindow($0) == true },
@@ -117,6 +119,7 @@ final class StatusMenuHost {
         rowFrames.removeAll(keepingCapacity: true)
         model.menuDidClose()
         root?.view.rootView = AnyView(EmptyView())
+        onVisibilityChanged?()
     }
 
     func openSubmenu(_ page: StatusMenuPage, enterKeyboard: Bool) {

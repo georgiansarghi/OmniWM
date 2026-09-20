@@ -102,7 +102,7 @@ final class WMController {
     @ObservationIgnored
     private var hiddenWorkspaceBarMonitorIds: Set<Monitor.ID> = []
     @ObservationIgnored
-    private var isWorkspaceBarRevealHeld = false
+    private(set) var isWorkspaceBarRevealHeld = false
     @ObservationIgnored
     private lazy var workspaceBarRevealMonitor: WorkspaceBarRevealMonitor = {
         let monitor = WorkspaceBarRevealMonitor()
@@ -416,9 +416,8 @@ extension WMController {
             || ipcApplicationBridge?.hasSubscribers(for: .layoutChanged) == true
     }
 
-    func isWorkspaceBarConfiguredVisible(on monitor: Monitor, resolved: ResolvedBarSettings) -> Bool {
-        guard resolved.enabled, !hiddenWorkspaceBarMonitorIds.contains(monitor.id) else { return false }
-        return settings.workspaceBar.revealModifier == .off || isWorkspaceBarRevealHeld
+    func isWorkspaceBarEnabled(on monitor: Monitor, resolved: ResolvedBarSettings) -> Bool {
+        resolved.enabled && !hiddenWorkspaceBarMonitorIds.contains(monitor.id)
     }
 
     func pruneHiddenWorkspaceBarMonitorIds() {

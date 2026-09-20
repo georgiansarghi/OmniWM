@@ -97,6 +97,13 @@ private struct GlobalBarSettingsSection: View {
                         "Reserve tiled layout space at the selected edge using the configured bar thickness."
                     )
 
+                Toggle("Auto-Hide on Pointer Leave", isOn: Bindable(settings.workspaceBar).autoHide)
+                    .onChange(of: settings.workspaceBar.autoHide) { _, _ in
+                        controller.updateWorkspaceBarSettings()
+                    }
+                    .help("Reveal near the bar after 150 ms; hide after 400 ms away. "
+                        + "Stays open for popups and never reserves layout space.")
+
                 Picker("Reveal on Modifier Hold", selection: Bindable(settings.workspaceBar).revealModifier) {
                     ForEach(WorkspaceBarRevealModifier.allCases, id: \.self) { modifier in
                         Text(modifier.displayName).tag(modifier)
@@ -105,7 +112,8 @@ private struct GlobalBarSettingsSection: View {
                 .onChange(of: settings.workspaceBar.revealModifier) { _, _ in
                     controller.updateWorkspaceBarSettings()
                 }
-                .help("Show the workspace bar as an overlay only while the selected modifiers are held")
+                .help("Show the bar as an overlay while these modifiers are held. "
+                    + "With Auto-Hide enabled, hovering can also reveal it.")
 
                 if settings.workspaceBar.revealModifier != .off {
                     SettingsSliderRow(

@@ -24,6 +24,10 @@ final class HiddenBarStatusItems {
         fallbackIcon.dismiss()
     }
 
+    func fallbackFrame(on monitorId: Monitor.ID) -> CGRect? {
+        fallbackIcon.displayedFrame(on: monitorId)
+    }
+
     func ownsStatusItemWindow(_ window: NSWindow) -> Bool {
         window === omniButton?.window || fallbackIcon.owns(window: window)
     }

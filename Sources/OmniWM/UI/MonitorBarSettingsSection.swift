@@ -77,6 +77,16 @@ struct MonitorBarSettingsSection: View {
                 "Reserve tiled layout space at the selected edge using the configured bar thickness."
             )
 
+            OverridableToggle(
+                label: "Auto-Hide on Pointer Leave",
+                value: ms.autoHide,
+                globalValue: settings.workspaceBar.autoHide,
+                onChange: { newValue in updateSetting { $0.autoHide = newValue } },
+                onReset: { updateSetting { $0.autoHide = nil } }
+            )
+            .help("Reveal near the bar after 150 ms; hide after 400 ms away. "
+                + "Stays open for popups and never reserves layout space.")
+
             OverridablePicker(
                 label: "Notch Mode",
                 value: ms.notchMode,

@@ -123,7 +123,8 @@ struct WorldView {
                         accentColor: resolved.accentColor,
                         textColor: resolved.textColor,
                         orientation: resolved.position.isVertical ? .vertical : .horizontal
-                    )
+                    ),
+                    retainWhileHidden: controller.canAutoRevealWorkspaceBar(on: monitor, resolved: resolved)
                 )
             )
         }

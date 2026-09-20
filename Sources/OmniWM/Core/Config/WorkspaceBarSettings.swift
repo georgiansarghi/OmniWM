@@ -67,6 +67,10 @@ final class WorkspaceBarSettings {
         didSet { onChange?() }
     }
 
+    var autoHide = WorkspaceBarSettings.defaults.autoHide {
+        didSet { onChange?() }
+    }
+
     var revealModifier = WorkspaceBarSettings.defaults.revealModifier {
         didSet { onChange?() }
     }
@@ -179,7 +183,8 @@ final class WorkspaceBarSettings {
             xOffset: xOffset,
             yOffset: yOffset,
             accentColor: accentColor,
-            textColor: textColor
+            textColor: textColor,
+            autoHide: autoHide
         )
     }
 
@@ -204,6 +209,7 @@ final class WorkspaceBarSettings {
 
     func applyAppearance(_ bar: SettingsExport.WorkspaceBar, monitorOverrides: [MonitorBarSettings]) {
         reserveLayoutSpace = bar.reserveLayoutSpace
+        autoHide = bar.autoHide
         revealModifier = bar.revealModifier
         revealHoldMilliseconds = WorkspaceBarSettings.validatedRevealHoldMilliseconds(
             bar.revealHoldMilliseconds
@@ -264,7 +270,8 @@ final class WorkspaceBarSettings {
             xOffset: override?.xOffset ?? xOffset,
             yOffset: override?.yOffset ?? yOffset,
             accentColor: accentColor,
-            textColor: textColor
+            textColor: textColor,
+            autoHide: override?.autoHide ?? autoHide
         )
     }
 

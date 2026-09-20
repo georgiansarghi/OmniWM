@@ -29,6 +29,7 @@ struct MonitorBarSettings: MonitorSettingsType {
     var showAccentHighlights: Bool?
     var xOffset: Double?
     var yOffset: Double?
+    var autoHide: Bool?
 
     init(
         id: UUID = UUID(),
@@ -53,7 +54,8 @@ struct MonitorBarSettings: MonitorSettingsType {
         showItemBackgrounds: Bool? = nil,
         showAccentHighlights: Bool? = nil,
         xOffset: Double? = nil,
-        yOffset: Double? = nil
+        yOffset: Double? = nil,
+        autoHide: Bool? = nil
     ) {
         self.id = id
         self.monitorName = monitorName
@@ -78,6 +80,7 @@ struct MonitorBarSettings: MonitorSettingsType {
         self.showAccentHighlights = showAccentHighlights
         self.xOffset = xOffset
         self.yOffset = yOffset
+        self.autoHide = autoHide
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -85,7 +88,7 @@ struct MonitorBarSettings: MonitorSettingsType {
         case enabled, showLabels, showFloatingWindows, deduplicateAppIcons
         case hideEmptyWorkspaces, reserveLayoutSpace, notchMode, notchActiveZoneWidth, position, windowLevel
         case height, backgroundOpacity, inactiveIconOpacity, transparentBackground, solidBlackBackground,
-             showItemBackgrounds, showAccentHighlights, xOffset, yOffset
+             showItemBackgrounds, showAccentHighlights, xOffset, yOffset, autoHide
     }
 
     init(from decoder: Decoder) throws {
@@ -113,6 +116,7 @@ struct MonitorBarSettings: MonitorSettingsType {
         showAccentHighlights = try container.decodeIfPresent(Bool.self, forKey: .showAccentHighlights)
         xOffset = try container.decodeIfPresent(Double.self, forKey: .xOffset)
         yOffset = try container.decodeIfPresent(Double.self, forKey: .yOffset)
+        autoHide = try container.decodeIfPresent(Bool.self, forKey: .autoHide)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -145,6 +149,7 @@ struct MonitorBarSettings: MonitorSettingsType {
         try container.encodeIfPresent(showAccentHighlights, forKey: .showAccentHighlights)
         try container.encodeIfPresent(xOffset, forKey: .xOffset)
         try container.encodeIfPresent(yOffset, forKey: .yOffset)
+        try container.encodeIfPresent(autoHide, forKey: .autoHide)
     }
 }
 
@@ -172,4 +177,5 @@ struct ResolvedBarSettings {
     let yOffset: Double
     let accentColor: SettingsColor?
     let textColor: SettingsColor?
+    var autoHide = false
 }

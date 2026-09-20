@@ -7,6 +7,19 @@ import XCTest
 
 @MainActor
 final class StatusMenuPanelTests: XCTestCase {
+    func testVisibilityCallbacksSeeTheShownAndDismissedPanel() {
+        let fixture = makeFixture()
+        defer { fixture.cleanup() }
+        var visibility: [Bool] = []
+        fixture.host.onVisibilityChanged = {
+            visibility.append(fixture.host.isVisible && fixture.host.panel?.isVisible == true)
+        }
+        fixture.show()
+        fixture.host.dismiss()
+        XCTAssertEqual(visibility, [true, false])
+        fixture.host.onVisibilityChanged = nil
+    }
+
     func testContentIsCappedToScreenAndAnchoredAtEdges() {
         let screen = CGRect(x: -1280, y: 100, width: 1280, height: 700)
         let size = StatusMenuGeometry.panelSize(
