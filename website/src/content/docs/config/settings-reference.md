@@ -231,8 +231,9 @@ The per-monitor workspace bar. Per-monitor exceptions live in [`monitorBarOverri
 | `hideEmptyWorkspaces` | boolean | `false` | Hides pills for workspaces with no windows. |
 | `excludedBundleIDs` | string array | `[]` | Bundle IDs whose windows never contribute icons to the bar. |
 | `iconOverrides` | table | `{}` | Bundle ID → custom icon source (see below). |
-| `reserveLayoutSpace` | boolean | `false` | Reserves the configured bar thickness at its selected edge, including layout-fullscreen windows. Offsets do not change the reservation. |
-| `revealModifier` | string | `"off"` | Reveal the bar by holding a modifier. Any value other than `off` makes the bar overlay-only: it reserves no layout space at all while the modifier is configured, not just while it is held. Values: `off`, `option`, `control`, `command`, `shift`, `controlOption`, `optionCommand`, `optionShift`, `controlCommand`, `controlShift`, `commandShift`, `controlOptionCommand`, `controlOptionShift`, `optionCommandShift`, `controlCommandShift`, `controlOptionCommandShift`. |
+| `reserveLayoutSpace` | boolean | `false` | Reserves the configured bar thickness at its selected edge, including layout-fullscreen windows. Offsets do not change the reservation. Ignored while `autoHide` or modifier reveal is enabled. |
+| `autoHide` | boolean | `false` | **Unreleased (build from `main`):** reveals near the bar/its edge segment after 150 ms; hides after 400 ms away. Keeps open for related popups and window-list sheets. Overlay-only: never reserves layout space. Supports per-display overrides. |
+| `revealModifier` | string | `"off"` | Reveal the bar by holding a modifier; with `autoHide`, either hovering or the modifier can reveal it. Any value other than `off` makes the bar overlay-only: it reserves no layout space at all while the modifier is configured, not just while it is held. Values: `off`, `option`, `control`, `command`, `shift`, `controlOption`, `optionCommand`, `optionShift`, `controlCommand`, `controlShift`, `commandShift`, `controlOptionCommand`, `controlOptionShift`, `optionCommandShift`, `controlCommandShift`, `controlOptionCommandShift`. |
 | `revealHoldMilliseconds` | float | `200.0` | How long the modifier must be held before the bar reveals. |
 | `hideInNativeFullscreen` | boolean | `false` | Hides the bar while a native-fullscreen space is active. Effective `fillLeftOfNotch` at a top position always hides there, regardless of this setting. Bottom/left/right follow this setting even when Fill Left is saved. |
 | `height` | float | `24.0` | Bar thickness in points: height for horizontal bars, width for left/right bars. Side bars scroll vertically when their content exceeds the usable display height. |
@@ -447,7 +448,7 @@ Five arrays hold per-monitor exceptions to the global tables. Every entry requir
 
 | Array | Overridable keys |
 | --- | --- |
-| `monitorBarOverrides` | `enabled`, `showLabels`, `showFloatingWindows`, `deduplicateAppIcons`, `hideEmptyWorkspaces`, `reserveLayoutSpace`, `notchMode`, `notchActiveZoneWidth`, `position`, `windowLevel`, `height`, `backgroundOpacity`, `inactiveIconOpacity`, `transparentBackground`, `solidBlackBackground`, `showItemBackgrounds`, `showAccentHighlights`, `xOffset`, `yOffset` — see [`workspaceBar`](#workspacebar) |
+| `monitorBarOverrides` | `enabled`, `autoHide`, `showLabels`, `showFloatingWindows`, `deduplicateAppIcons`, `hideEmptyWorkspaces`, `reserveLayoutSpace`, `notchMode`, `notchActiveZoneWidth`, `position`, `windowLevel`, `height`, `backgroundOpacity`, `inactiveIconOpacity`, `transparentBackground`, `solidBlackBackground`, `showItemBackgrounds`, `showAccentHighlights`, `xOffset`, `yOffset` — see [`workspaceBar`](#workspacebar) |
 | `monitorOrientationOverrides` | `orientation`: `horizontal` or `vertical` layout orientation for that monitor |
 | `monitorNiriOverrides` | `visibleContainerCount`, `centerFocusedColumn`, `alwaysCenterSingleColumn`, `singleWindowFit`, `infiniteLoop` — see [`niri`](#niri) |
 | `monitorDwindleOverrides` | `smartSplit`, `defaultSplitRatio`, `splitWidthMultiplier`, `singleWindowFit`, `useGlobalGaps`, `innerGap` — see [`dwindle`](#dwindle) |

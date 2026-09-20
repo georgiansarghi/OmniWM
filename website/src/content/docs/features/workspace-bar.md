@@ -25,7 +25,8 @@ Configure position, height, and appearance in Settings:
 
 - **Position** — overlap the menu bar, sit below it, or dock at **Bottom**, **Left**, or **Right** along the display's usable edge, avoiding a visible Dock. Available globally and per display.
 - **Notch handling** — `Off`, `Move Below Menu Bar`, or a split layout (`Split — Active Left` / `Split — Active Right`) that flows the bar around the notch with your chosen side for the active workspace.
-- **Reveal on modifier hold** — keep the bar hidden until you hold a chosen modifier.
+- **Auto-hide** — reveal when the pointer approaches the bar; hide after it leaves. See [Auto-hide](#auto-hide).
+- **Reveal on modifier hold** — keep the bar hidden until you hold a chosen modifier, or use it as an alternative to hovering when auto-hide is enabled.
 - **Hide empty workspaces** — omit chips for workspaces with no windows.
 - **Reserve layout space** — reserve room for the bar so tiled windows never sit underneath it.
 - **Hide in Native Fullscreen** — hide the bar on a monitor while that monitor shows a macOS native fullscreen window, and bring it back on exit; reserved tiled layout space is left untouched so windows do not shuffle around the fullscreen session.
@@ -48,6 +49,27 @@ Edge placement follows display geometry and Dock changes rather than relying on 
 Left/right bars stack workspaces, app icons, floating-window groups, and scratchpads vertically, keeping text and icons upright. The `height` setting controls their **width**. Long labels truncate with accessible full names; tall content scrolls vertically. Stats, hidden-icon panels, and the fallback OmniWM status menu open inward from the displayed bar/icon bounds.
 
 Notch modes, including **Fill Left of Notch**, are ignored at bottom/left/right without changing your saved notch preference. Per-display `position` overrides accept the same values.
+
+### Auto-hide
+
+:::note[Unreleased]
+Available when building from `main`, not in OmniWM 0.7.0.
+:::
+
+Enable **Auto-Hide on Pointer Leave** globally or in a display's workspace-bar settings:
+
+```toml
+[workspaceBar]
+autoHide = true
+```
+
+The bar appears after the pointer stays near its hidden location or the corresponding edge segment for **150 ms**. Only the bar's portion of the edge activates it, not the entire display edge. Offsets are respected; the activation region connects the bar to its display edge. Bottom and side bars use the usable edge above/beside a visible Dock.
+
+After revealing, a larger keep-open margin and a **400 ms** hide delay prevent flickering while moving across the bar. The bar stays visible while using its stats popup, hidden-icon panel, status menu, or grouped-window sheet. Moving between displays reveals each bar independently. Hidden panels are reused; an idle hidden bar does not poll the mouse.
+
+Auto-hide is **overlay-only**, even if **Reserve layout space** is checked: tiled and layout-fullscreen windows do not resize on reveal/hide. An optional reveal modifier is an alternative way to show the bar. Disabling the bar, manually toggling its visibility off, or suppressing it in native fullscreen takes precedence over both hover and modifier reveal.
+
+These delays and margins are fixed in this first version. Reveal/hide is immediate after the delay, without a sliding animation. macOS may also reveal its own Dock or menu bar when the pointer reaches the same edge.
 
 ### Additional appearance controls
 
