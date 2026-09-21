@@ -12,7 +12,10 @@ final class WorkspaceBarAutoHideSettingsTests: XCTestCase {
         let data = try SettingsTOMLCodec.encode(defaults)
         XCTAssertFalse(try SettingsTOMLCodec.decode(data).workspaceBar.autoHide)
         let toml = String(decoding: data, as: UTF8.self)
-        let old = toml.replacingOccurrences(of: "[workspaceBar]\nautoHide = false\n", with: "[workspaceBar]\n")
+        let section = try XCTUnwrap(toml.range(of: "[workspaceBar]\n"))
+        let key = try XCTUnwrap(toml.range(of: "autoHide = false\n", range: section.upperBound ..< toml.endIndex))
+        var old = toml
+        old.removeSubrange(key)
         XCTAssertNotEqual(old, toml)
         XCTAssertFalse(try SettingsTOMLCodec.decode(Data(old.utf8)).workspaceBar.autoHide)
     }

@@ -33,6 +33,8 @@ extension SettingsExport {
         var accentColor: SettingsColor?
         var textColor: SettingsColor?
         var autoHide = false
+        var activityReveal: WorkspaceBarActivityReveal = .off
+        var activityRevealSeconds: Double = 1
     }
 }
 
@@ -72,6 +74,11 @@ extension SettingsExport.WorkspaceBar {
         accentColor = try container.decodeIfPresent(SettingsColor.self, forKey: .accentColor)
         textColor = try container.decodeIfPresent(SettingsColor.self, forKey: .textColor)
         autoHide = try container.decodeIfPresent(Bool.self, forKey: .autoHide) ?? defaults.autoHide
+        activityReveal = try container.decodeIfPresent(WorkspaceBarActivityReveal.self, forKey: .activityReveal)
+            ?? defaults.activityReveal
+        activityRevealSeconds = WorkspaceBarActivityReveal.validatedDuration(
+            try container.decodeIfPresent(Double.self, forKey: .activityRevealSeconds) ?? defaults.activityRevealSeconds
+        )
     }
 
     static func defaults() -> Self {

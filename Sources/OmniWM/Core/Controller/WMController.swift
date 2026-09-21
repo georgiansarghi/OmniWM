@@ -96,6 +96,8 @@ final class WMController {
     @ObservationIgnored
     private(set) lazy var workspaceBarManager: WorkspaceBarManager = .init(motionPolicy: motionPolicy)
     @ObservationIgnored
+    private(set) lazy var workspaceBarActivityController = WorkspaceBarActivityController(controller: self)
+    @ObservationIgnored
     private var runtimeFrameJobCancellationSuppressionDepth: Int = 0
     @ObservationIgnored
     let floatDemotionTracker = FloatDemotionTracker()
@@ -432,6 +434,7 @@ extension WMController {
         domains: InvalidationDomain,
         surfaceScope: SessionSurfaceInvalidationScope
     ) {
+        workspaceBarActivityController.refresh()
         switch surfaceScope {
         case .full:
             surfaceReconciler.noteWorldChanged()

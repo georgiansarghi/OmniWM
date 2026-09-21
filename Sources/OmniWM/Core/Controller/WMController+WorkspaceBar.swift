@@ -163,6 +163,9 @@ extension WMController {
         guard isWorkspaceBarEnabled(on: monitor, resolved: resolved) else { return false }
         if resolved.autoHide {
             return isWorkspaceBarRevealHeld || workspaceBarManager.isHoverRevealed(on: monitor.id)
+                ||
+                (resolved.activityReveal != .off && workspaceBarActivityController.state.revealed
+                    .contains(monitor.id))
         }
         return settings.workspaceBar.revealModifier == .off || isWorkspaceBarRevealHeld
     }

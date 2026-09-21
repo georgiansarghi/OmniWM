@@ -30,6 +30,8 @@ struct MonitorBarSettings: MonitorSettingsType {
     var xOffset: Double?
     var yOffset: Double?
     var autoHide: Bool?
+    var activityReveal: WorkspaceBarActivityReveal?
+    var activityRevealSeconds: Double?
 
     init(
         id: UUID = UUID(),
@@ -55,7 +57,9 @@ struct MonitorBarSettings: MonitorSettingsType {
         showAccentHighlights: Bool? = nil,
         xOffset: Double? = nil,
         yOffset: Double? = nil,
-        autoHide: Bool? = nil
+        autoHide: Bool? = nil,
+        activityReveal: WorkspaceBarActivityReveal? = nil,
+        activityRevealSeconds: Double? = nil
     ) {
         self.id = id
         self.monitorName = monitorName
@@ -81,6 +85,8 @@ struct MonitorBarSettings: MonitorSettingsType {
         self.xOffset = xOffset
         self.yOffset = yOffset
         self.autoHide = autoHide
+        self.activityReveal = activityReveal
+        self.activityRevealSeconds = activityRevealSeconds.map(WorkspaceBarActivityReveal.validatedDuration)
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -88,7 +94,8 @@ struct MonitorBarSettings: MonitorSettingsType {
         case enabled, showLabels, showFloatingWindows, deduplicateAppIcons
         case hideEmptyWorkspaces, reserveLayoutSpace, notchMode, notchActiveZoneWidth, position, windowLevel
         case height, backgroundOpacity, inactiveIconOpacity, transparentBackground, solidBlackBackground,
-             showItemBackgrounds, showAccentHighlights, xOffset, yOffset, autoHide
+             showItemBackgrounds, showAccentHighlights, xOffset, yOffset, autoHide, activityReveal,
+             activityRevealSeconds
     }
 
     init(from decoder: Decoder) throws {
@@ -117,6 +124,9 @@ struct MonitorBarSettings: MonitorSettingsType {
         xOffset = try container.decodeIfPresent(Double.self, forKey: .xOffset)
         yOffset = try container.decodeIfPresent(Double.self, forKey: .yOffset)
         autoHide = try container.decodeIfPresent(Bool.self, forKey: .autoHide)
+        activityReveal = try container.decodeIfPresent(WorkspaceBarActivityReveal.self, forKey: .activityReveal)
+        activityRevealSeconds = try container.decodeIfPresent(Double.self, forKey: .activityRevealSeconds)
+            .map(WorkspaceBarActivityReveal.validatedDuration)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -150,6 +160,8 @@ struct MonitorBarSettings: MonitorSettingsType {
         try container.encodeIfPresent(xOffset, forKey: .xOffset)
         try container.encodeIfPresent(yOffset, forKey: .yOffset)
         try container.encodeIfPresent(autoHide, forKey: .autoHide)
+        try container.encodeIfPresent(activityReveal, forKey: .activityReveal)
+        try container.encodeIfPresent(activityRevealSeconds, forKey: .activityRevealSeconds)
     }
 }
 
@@ -178,4 +190,6 @@ struct ResolvedBarSettings {
     let accentColor: SettingsColor?
     let textColor: SettingsColor?
     var autoHide = false
+    var activityReveal: WorkspaceBarActivityReveal = .off
+    var activityRevealSeconds: Double = 1
 }

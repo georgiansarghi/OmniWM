@@ -71,6 +71,21 @@ final class WorkspaceBarSettings {
         didSet { onChange?() }
     }
 
+    var activityReveal = WorkspaceBarSettings.defaults.activityReveal {
+        didSet { onChange?() }
+    }
+
+    var activityRevealSeconds = WorkspaceBarSettings.defaults.activityRevealSeconds {
+        didSet {
+            let normalized = WorkspaceBarActivityReveal.validatedDuration(activityRevealSeconds)
+            guard normalized == activityRevealSeconds else {
+                activityRevealSeconds = normalized
+                return
+            }
+            onChange?()
+        }
+    }
+
     var revealModifier = WorkspaceBarSettings.defaults.revealModifier {
         didSet { onChange?() }
     }
@@ -139,6 +154,11 @@ final class WorkspaceBarSettings {
             var normalized = monitorOverrides
             var changed = false
             for index in normalized.indices {
+                let duration = normalized[index].activityRevealSeconds.map(WorkspaceBarActivityReveal.validatedDuration)
+                if normalized[index].activityRevealSeconds != duration {
+                    normalized[index].activityRevealSeconds = duration
+                    changed = true
+                }
                 let opacity = Self.normalizedInactiveIconOpacity(normalized[index].inactiveIconOpacity)
                 if normalized[index].inactiveIconOpacity != opacity {
                     normalized[index].inactiveIconOpacity = opacity
@@ -184,7 +204,9 @@ final class WorkspaceBarSettings {
             yOffset: yOffset,
             accentColor: accentColor,
             textColor: textColor,
-            autoHide: autoHide
+            autoHide: autoHide,
+            activityReveal: activityReveal,
+            activityRevealSeconds: activityRevealSeconds
         )
     }
 
@@ -210,6 +232,8 @@ final class WorkspaceBarSettings {
     func applyAppearance(_ bar: SettingsExport.WorkspaceBar, monitorOverrides: [MonitorBarSettings]) {
         reserveLayoutSpace = bar.reserveLayoutSpace
         autoHide = bar.autoHide
+        activityReveal = bar.activityReveal
+        activityRevealSeconds = WorkspaceBarActivityReveal.validatedDuration(bar.activityRevealSeconds)
         revealModifier = bar.revealModifier
         revealHoldMilliseconds = WorkspaceBarSettings.validatedRevealHoldMilliseconds(
             bar.revealHoldMilliseconds
@@ -271,10 +295,14 @@ final class WorkspaceBarSettings {
             yOffset: override?.yOffset ?? yOffset,
             accentColor: accentColor,
             textColor: textColor,
-            autoHide: override?.autoHide ?? autoHide
+            autoHide: override?.autoHide ?? autoHide,
+            activityReveal: override?.activityReveal ?? activityReveal,
+            activityRevealSeconds: override?.activityRevealSeconds ?? activityRevealSeconds
         )
     }
+}
 
+extension WorkspaceBarSettings {
     @discardableResult
     func addExcludedBundleID(_ rawBundleID: String) -> Bool {
         let bundleID = rawBundleID.trimmingCharacters(in: .whitespacesAndNewlines)

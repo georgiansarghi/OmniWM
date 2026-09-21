@@ -329,6 +329,7 @@ final class WorkspaceBarManager {
 
 extension WorkspaceBarManager {
     func cleanup() {
+        controller?.workspaceBarActivityController.stop()
         autoHideMonitorIds = []
         hoverMonitor.stop()
         for monitorId in Array(barsByMonitor.keys) {

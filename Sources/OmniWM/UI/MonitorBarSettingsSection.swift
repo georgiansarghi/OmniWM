@@ -21,6 +21,31 @@ struct MonitorBarSettingsSection: View {
         controller.updateWorkspaceBarSettings()
     }
 
+    private var activitySettings: some View {
+        let ms = monitorSettings
+        let resolved = settings.workspaceBar.resolved(for: monitor)
+        return Group {
+            OverridablePicker(
+                label: "Briefly Show After Changes", value: ms.activityReveal,
+                globalValue: settings.workspaceBar.activityReveal,
+                options: WorkspaceBarActivityReveal.allCases, displayName: { $0.displayName },
+                onChange: { newValue in updateSetting { $0.activityReveal = newValue } },
+                onReset: { updateSetting { $0.activityReveal = nil } }
+            )
+            OverridableSlider(
+                label: "Keep Visible After Last Change", value: ms.activityRevealSeconds,
+                globalValue: settings.workspaceBar.activityRevealSeconds,
+                range: 0.1 ... 10, step: 0.1, formatter: { String(format: "%.1f s", $0) },
+                onChange: { newValue in updateSetting { $0.activityRevealSeconds = newValue } },
+                onReset: { updateSetting { $0.activityRevealSeconds = nil } }
+            )
+            .disabled(resolved.activityReveal == .off)
+        }
+        .disabled(!resolved.autoHide)
+        .help("Requires Auto-Hide. Repeated workspace, Niri column, or managed focus changes restart the duration; "
+            + "hover delays remain zero.")
+    }
+
     var body: some View {
         let ms = monitorSettings
 
@@ -86,6 +111,8 @@ struct MonitorBarSettingsSection: View {
             )
             .help("Reveal immediately near the bar; hide immediately when the pointer leaves its keep-open area. "
                 + "Stays open for popups and never reserves layout space.")
+
+            activitySettings
 
             OverridablePicker(
                 label: "Notch Mode",

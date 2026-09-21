@@ -60,6 +60,32 @@ private struct GlobalBarSettingsSection: View {
     @Bindable var controller: WMController
     @State private var pendingAppearanceSync: Task<Void, Never>?
 
+    private var activitySettings: some View {
+        Group {
+            Picker("Briefly Show After Changes", selection: Bindable(settings.workspaceBar).activityReveal) {
+                ForEach(WorkspaceBarActivityReveal.allCases, id: \.self) { mode in
+                    Text(mode.displayName).tag(mode)
+                }
+            }
+            .onChange(of: settings.workspaceBar.activityReveal) { _, _ in
+                controller.updateWorkspaceBarSettings()
+            }
+            SettingsSliderRow(
+                label: "Keep Visible After Last Change",
+                value: Bindable(settings.workspaceBar).activityRevealSeconds,
+                range: 0.1 ... 10, step: 0.1,
+                valueText: String(format: "%.1f s", settings.workspaceBar.activityRevealSeconds)
+            )
+            .disabled(settings.workspaceBar.activityReveal == .off)
+            .onChange(of: settings.workspaceBar.activityRevealSeconds) { _, _ in
+                controller.updateWorkspaceBarSettings()
+            }
+        }
+        .disabled(!settings.workspaceBar.autoHide)
+        .help("Requires Auto-Hide. Actual workspace, Niri column, or managed focus changes reveal the bar immediately. "
+            + "Repeated changes restart the duration; hover delays remain zero.")
+    }
+
     var body: some View {
         Section("Workspace Bar") {
             Toggle("Enable Workspace Bar", isOn: Bindable(settings.workspaceBar).enabled)
@@ -105,6 +131,8 @@ private struct GlobalBarSettingsSection: View {
                         "Reveal immediately near the bar; hide immediately when the pointer leaves its keep-open area. "
                             + "Stays open for popups and never reserves layout space."
                     )
+
+                activitySettings
 
                 Picker("Reveal on Modifier Hold", selection: Bindable(settings.workspaceBar).revealModifier) {
                     ForEach(WorkspaceBarRevealModifier.allCases, id: \.self) { modifier in
