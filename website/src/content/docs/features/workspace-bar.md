@@ -65,11 +65,35 @@ autoHide = true
 
 The bar appears **immediately** when the pointer enters its hidden location or the corresponding edge segment. Only the bar's portion of the edge activates it, not the entire display edge. Offsets are respected; the activation region connects the bar to its display edge. Bottom and side bars use the usable edge above/beside a visible Dock.
 
-After revealing, a larger keep-open margin prevents flickering while moving across the bar. Leaving this area hides the bar **immediately**. The bar stays visible while using its stats popup, hidden-icon panel, status menu, or grouped-window sheet. Moving between displays reveals each bar independently. Hidden panels are reused; an idle hidden bar does not poll the mouse.
+After revealing, a larger keep-open margin prevents flickering while moving across the bar. Leaving this area hides the bar **immediately**, unless an activity reveal is still active. The bar stays visible while using its stats popup, hidden-icon panel, status menu, or grouped-window sheet. Moving between displays reveals each bar independently. Hidden panels are reused; an idle hidden bar does not poll the mouse.
 
-Auto-hide is **overlay-only**, even if **Reserve layout space** is checked: tiled and layout-fullscreen windows do not resize on reveal/hide. An optional reveal modifier is an alternative way to show the bar. Disabling the bar, manually toggling its visibility off, or suppressing it in native fullscreen takes precedence over both hover and modifier reveal.
+Auto-hide is **overlay-only**, even if **Reserve layout space** is checked: tiled and layout-fullscreen windows do not resize on reveal/hide. An optional reveal modifier is an alternative way to show the bar. Disabling the bar, manually toggling its visibility off, or suppressing it in native fullscreen takes precedence over hover, modifier, and activity reveal.
 
 Both reveal and hide delays are **zero**, with no sliding animation. The hover margins remain fixed in this first version. macOS may also reveal its own Dock or menu bar when the pointer reaches the same edge.
+
+### Briefly show after changes
+
+With Auto-hide enabled, **Briefly Show After Changes** can reveal the bar without moving the pointer. This is optional and defaults to **Never**:
+
+| Setting | TOML value | Reveals after |
+|---|---|---|
+| Never | `"off"` | No activity-triggered reveal |
+| Workspace Changes | `"workspace"` | The display's active workspace changes, including empty workspaces |
+| Workspace and Column Changes | `"workspaceAndColumn"` | A workspace change or a different selected Niri column |
+| Any Focused-Window Change | `"focus"` | A workspace change or a newly focused managed window, including floating windows |
+
+```toml
+[workspaceBar]
+autoHide = true
+activityReveal = "workspaceAndColumn"
+activityRevealSeconds = 1.0
+```
+
+The bar appears immediately on the affected display and stays visible for **Keep Visible After Last Change** (default 1 second; range 0.1–10 seconds). Each qualifying change restarts that duration rather than stacking durations or flashing the bar. Hover and popup interaction can keep it open afterward. This duration is separate from the **zero-delay hover behavior**; it never reserves layout space or activates the bar's window.
+
+Activity follows actual workspace/column/focus state changes, including keyboard, gesture, mouse, and IPC navigation—not command attempts, window-title/icon updates, or animation frames. Focus mode can also react to application-driven focus changes. In non-Niri layouts, the column preset only reacts to workspace changes. A column's identity, not its numeric index, is tracked; rearranging the same selected column does not count as changing columns.
+
+Both settings support per-display overrides with global inheritance. Their UI controls are disabled when Auto-hide is off, but saved preferences are preserved. Manual hiding, disabling, fullscreen suppression, and disconnecting a display cancel its pending activity reveal; reopening or enabling it does not replay old activity.
 
 ### Additional appearance controls
 
