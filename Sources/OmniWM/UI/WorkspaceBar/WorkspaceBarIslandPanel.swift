@@ -10,7 +10,7 @@ struct WorkspaceBarIslandPanel {
     let hostingView: NSHostingView<WorkspaceBarView>
     var slice: WorkspaceBarIslandSlice
     var showsSystemStatsButton: Bool
-    var lastAppliedFrame: NSRect?
+    var lastRequestedFrame: NSRect?
 
     init(panel: WorkspaceBarPanel, rootView: WorkspaceBarView, resolved: ResolvedBarSettings) {
         let hostingView = NSHostingView(rootView: rootView)
@@ -23,7 +23,7 @@ struct WorkspaceBarIslandPanel {
         self.hostingView = hostingView
         slice = rootView.slice
         showsSystemStatsButton = rootView.showsSystemStatsButton
-        lastAppliedFrame = nil
+        lastRequestedFrame = nil
         applySettings(resolved: resolved)
     }
 
@@ -41,8 +41,8 @@ struct WorkspaceBarIslandPanel {
         _ frame: NSRect,
         using frameApplier: (WorkspaceBarPanel, NSRect) -> Void
     ) {
-        guard lastAppliedFrame != frame else { return }
+        guard lastRequestedFrame != frame else { return }
         frameApplier(panel, frame)
-        lastAppliedFrame = frame
+        lastRequestedFrame = frame
     }
 }

@@ -94,7 +94,7 @@ private struct GlobalBarSettingsSection: View {
                         controller.updateWorkspaceBarSettings()
                     }
                     .help(
-                        "Reserve tiled layout space using the configured workspace bar height."
+                        "Reserve tiled layout space at the selected edge using the configured bar thickness."
                     )
 
                 Picker("Reveal on Modifier Hold", selection: Bindable(settings.workspaceBar).revealModifier) {
@@ -144,7 +144,8 @@ private struct GlobalBarSettingsSection: View {
                 }
                 .help(
                     "Move below the notch, split around it, or fill the area to its left, covering application menus. "
-                        + "Without a notch, Fill Left covers the left half of the menu bar."
+                        + "Without a notch, Fill Left covers the left half of the menu bar. "
+                        + "Notch modes are ignored at Bottom, Left, and Right."
                 )
 
                 if settings.workspaceBar.notchMode.isSplit {
@@ -210,7 +211,7 @@ private struct GlobalBarSettingsSection: View {
 
             Section("Appearance") {
                 SettingsSliderRow(
-                    label: "Bar Height",
+                    label: "Bar Thickness",
                     value: Bindable(settings.workspaceBar).height,
                     range: 20 ... 40,
                     step: 2,
