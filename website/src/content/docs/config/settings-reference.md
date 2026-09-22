@@ -223,7 +223,7 @@ The per-monitor workspace bar. Per-monitor exceptions live in [`monitorBarOverri
 | `showLabels` | boolean | `true` | Shows workspace names next to their numbers. |
 | `showFloatingWindows` | boolean | `false` | Includes floating windows' icons in workspace pills. |
 | `windowLevel` | string | `"popup"` | Bar window level: `normal`, `floating`, `status`, `popup`, `screensaver`. |
-| `position` | string | `"overlappingMenuBar"` | `overlappingMenuBar`, `belowMenuBar`, `bottom`, `left`, or `right`. **Fork feature:** `bottom`/`left`/`right` require `georgiansarghi/OmniWM:feat/workspace-bar-bottom` ([PR #1](https://github.com/georgiansarghi/OmniWM/pull/1)), not upstream `main`. Bottom and sides follow the usable display edge, avoid a visible Dock, and ignore notch modes. Side bars stack content vertically. |
+| `position` | string | `"overlappingMenuBar"` | `overlappingMenuBar`, `belowMenuBar`, `bottom`, `left`, or `right`. **Unreleased:** bottom and side placements follow the usable display edge and ignore notch modes. Side bars stack content vertically. |
 | `notchMode` | string | `"moveBelowMenuBar"` | Notch handling: `off`, `moveBelowMenuBar`, `splitActiveLeft`, `splitActiveRight`, or `fillLeftOfNotch`. The last fills the menu-bar area left of the notch and covers app menus; without a notch it uses the left half of the menu bar. Only top positions use notch handling. When `fillLeftOfNotch` is effective, it overrides the top position, `xOffset`, `yOffset`, `height`, and `reserveLayoutSpace`: the bar uses the menu-bar height and reserves no layout space. Bottom/left/right ignore this mode without changing its saved value. |
 | `notchActiveZoneWidth` | float | `180.0` | Width in points of the active zone around the notch. |
 | `systemStatsButton` | boolean | `false` | Adds a system stats button to the bar. |
@@ -232,7 +232,7 @@ The per-monitor workspace bar. Per-monitor exceptions live in [`monitorBarOverri
 | `excludedBundleIDs` | string array | `[]` | Bundle IDs whose windows never contribute icons to the bar. |
 | `iconOverrides` | table | `{}` | Bundle ID → custom icon source (see below). |
 | `reserveLayoutSpace` | boolean | `false` | Reserves the configured bar thickness at its selected edge, including layout-fullscreen windows. Offsets do not change the reservation. Ignored in `temporary` visibility mode. Stored modifier settings do not affect reservation in `alwaysVisible` mode. |
-| `visibility` | string | `"alwaysVisible"` | **Fork feature ([PR #1](https://github.com/georgiansarghi/OmniWM/pull/1), branch `feat/workspace-bar-bottom`):** `"alwaysVisible"` or `"temporary"`. Temporary bars are normally hidden and overlay-only; select independent pointer, activity, or modifier triggers. Supports per-display overrides. |
+| `visibility` | string | `"alwaysVisible"` | **Unreleased:** `"alwaysVisible"` or `"temporary"`. Temporary bars are normally hidden and overlay-only; select independent pointer, activity, or modifier triggers. Supports per-display overrides. |
 | `revealOnHover` | boolean | `true` | **Unreleased:** in temporary mode, allows pointer proximity to summon the bar. Both hover delays are zero. When false, hovering an already-visible bar or using its popups can still keep it open. Supports per-display overrides. |
 | `activityReveal` | string | `"off"` | **Unreleased:** requires temporary visibility, not pointer reveal. `"off"`, `"workspace"`, `"workspaceAndColumn"` (Niri), or `"focus"` (managed focused-window changes). All enabled presets include workspace changes. Supports per-display overrides. |
 | `activityRevealSeconds` | number | `1.0` | **Unreleased:** time to keep visible after the most recent qualifying change, in seconds (0.1–10). Repeated changes restart this duration; hover delays remain zero. Supports per-display overrides. |
@@ -251,7 +251,7 @@ The per-monitor workspace bar. Per-monitor exceptions live in [`monitorBarOverri
 | `accentColor` *(optional)* | color table | unset | Accent color override; unset uses the built-in accent. |
 | `textColor` *(optional)* | color table | unset | Text color override; unset uses the built-in text color. |
 
-Legacy `autoHide` is accepted on load and converted to the visibility/pointer settings. Modifier-only legacy configurations remain temporary with pointer/activity reveal off; hover-enabled display overrides retain their previously active activity settings. Explicit new keys take precedence, and saving removes the legacy alias. See [Visibility and reveal triggers](/features/workspace-bar/#visibility-and-reveal-triggers) for combinations and interaction rules.
+Existing modifier-only configurations load as temporary bars with pointer reveal disabled; explicit new keys take precedence. See [Visibility and reveal triggers](/features/workspace-bar/#visibility-and-reveal-triggers) for examples.
 
 `iconOverrides` maps a bundle ID to either an image file path — absolute, `~/`-relative, or relative to the `omniwm` config directory — or `bundle-resource:NAME` for an image resource inside that app's own bundle:
 

@@ -36,59 +36,27 @@ Configure position, height, and appearance in Settings:
 ### Bottom and side placement
 
 :::note[Unreleased]
-Bottom, Left, and Right are part of [georgiansarghi/OmniWM fork PR #1](https://github.com/georgiansarghi/OmniWM/pull/1). Build that fork's `feat/workspace-bar-bottom` branch, not upstream `main` or OmniWM 0.7.0.
+Edge placement and temporary visibility require a source build containing these changes.
 :::
 
-```toml
-[workspaceBar]
-position = "bottom" # also "left" or "right"
-```
+Set `position = "bottom"`, `"left"`, or `"right"` in `[workspaceBar]` or a per-display override. Placement follows the usable display edge, avoiding a visible Dock. X/Y offsets still apply; **Reserve layout space** reserves the configured thickness at that edge, regardless of offsets.
 
-Edge placement follows display geometry and Dock changes rather than relying on a large offset. X/Y offsets still apply (positive X moves right; positive Y moves upward). **Reserve layout space** reserves the configured bar thickness at the selected edge; offsets do not change that reservation. Visibility toggles, modifier reveal, and **Hide in Native Fullscreen** continue to apply.
-
-Left/right bars stack workspaces, app icons, floating-window groups, and scratchpads vertically, keeping text and icons upright. The `height` setting controls their **width**. Long labels truncate with accessible full names; tall content scrolls vertically. Stats, hidden-icon panels, and the fallback OmniWM status menu open inward from the displayed bar/icon bounds.
-
-Notch modes, including **Fill Left of Notch**, are ignored at bottom/left/right without changing your saved notch preference. Per-display `position` overrides accept the same values.
+Side bars keep labels and icons upright and scroll vertically when needed. `height` controls their width. Popups open inward from the displayed bar. Bottom and side positions ignore notch modes without changing the saved preference.
 
 ### Visibility and reveal triggers
 
-:::note[Unreleased]
-These controls are part of [georgiansarghi/OmniWM fork PR #1](https://github.com/georgiansarghi/OmniWM/pull/1). Build that fork's `feat/workspace-bar-bottom` branch; they are not available from upstream `main` or OmniWM 0.7.0.
-:::
-
 Choose **Visibility** globally or per display:
 
-- **Always Visible** (default) keeps the bar visible, ignoring stored reveal triggers.
-- **Show Temporarily** normally hides the bar. Choose any combination of **Pointer Approaches the Bar**, **Briefly Show After Changes**, and **Reveal on Modifier Hold**. With no triggers selected, it stays hidden; the settings show a reminder rather than silently enabling a trigger.
+- **Always Visible** (default) ignores reveal triggers without clearing preferences.
+- **Show Temporarily** hides the bar until a selected trigger reveals it. Temporary bars never reserve layout space or resize tiled/layout-fullscreen windows.
 
-For hover-only behavior:
+Triggers are independent and can be combined:
 
-```toml
-[workspaceBar]
-visibility = "temporary"
-revealOnHover = true
-```
+- **Pointer Approaches the Bar** (`revealOnHover`, default `true`) reveals immediately near the hidden bar or its edge segment, not the entire display edge.
+- **Briefly Show After Changes** (`activityReveal`, default `"off"`) reveals after workspace changes (`"workspace"`), workspace or selected Niri column changes (`"workspaceAndColumn"`), or workspace/focused-window changes (`"focus"`). No-op commands and animation frames do not count.
+- **Reveal on Modifier Hold** (`revealModifier`) applies globally to temporary displays, using the configured hold delay.
 
-When pointer reveal is enabled, the bar appears **immediately** near its hidden location or corresponding edge segment. Only the bar's portion of the edge activates it. Offsets are respected; bottom and side bars use the usable edge beside a visible Dock. A larger keep-open margin prevents flickering while moving across the bar.
-
-When pointer reveal is **off**, approaching the edge or the hidden bar cannot summon it. Once activity or a modifier reveals it, hovering the **displayed bar or fallback icon** can keep it open for interaction; the empty edge corridor cannot. Stats popups, hidden-icon panels, status menus, and grouped-window sheets keep it open with either pointer setting. Leaving hides it immediately if no other reveal reason remains. Activity durations continue counting during interaction, so leaving after expiration adds no extra delay.
-
-Temporary bars are **overlay-only**, even if **Reserve layout space** is checked: tiled and layout-fullscreen windows do not resize on reveal/hide. Disabling the bar, manually hiding it, or native-fullscreen suppression takes precedence over all triggers. Hidden panels are reused and do not poll the mouse. Both hover delays remain **zero**, with no sliding animation.
-
-Visibility, pointer reveal, and activity settings support per-display inheritance and overrides. The modifier combination and its hold delay are global and apply only to temporary displays. Selecting Always Visible disables the scope's reveal controls without clearing preferences; the global modifier controls remain available if another display is configured as temporary. macOS may independently reveal its Dock or menu bar at an edge.
-
-Legacy `autoHide` configurations are upgraded on load: `true` becomes temporary + pointer reveal; modifier-only configurations remain temporary with pointer and activity reveal off. Legacy hover-enabled display overrides retain their previously active activity settings. Otherwise the bar remains always visible. New `visibility`/`revealOnHover` keys take precedence; saves retire the old alias while preserving unrelated settings.
-
-### Briefly show after changes
-
-In Show Temporarily mode, **Briefly Show After Changes** can reveal the bar without moving the pointer—even with pointer reveal off. This is optional and defaults to **Never**:
-
-| Setting | TOML value | Reveals after |
-|---|---|---|
-| Never | `"off"` | No activity-triggered reveal |
-| Workspace Changes | `"workspace"` | The display's active workspace changes, including empty workspaces |
-| Workspace and Column Changes | `"workspaceAndColumn"` | A workspace change or a different selected Niri column |
-| Any Focused-Window Change | `"focus"` | A workspace change or a newly focused managed window, including floating windows |
+For an activity-only bar:
 
 ```toml
 [workspaceBar]
@@ -96,13 +64,14 @@ visibility = "temporary"
 revealOnHover = false
 activityReveal = "workspaceAndColumn"
 activityRevealSeconds = 1.0
+revealModifier = "off"
 ```
 
-The bar appears immediately on the affected display and stays visible for **Keep Visible After Last Change** (default 1 second; range 0.1–10 seconds). Each qualifying change restarts that duration rather than stacking durations or flashing the bar. Hover and popup interaction can keep it open afterward. This duration is separate from the **zero-delay hover behavior**; it never reserves layout space or activates the bar's window.
+Each qualifying change restarts **Keep Visible After Last Change** (default 1 second; range 0.1–10 seconds) on the affected display. Pointer and activity settings support per-display overrides.
 
-Activity follows actual workspace/column/focus state changes, including keyboard, gesture, mouse, and IPC navigation—not command attempts, window-title/icon updates, or animation frames. Focus mode can also react to application-driven focus changes. In non-Niri layouts, the column preset only reacts to workspace changes. A column's identity, not its numeric index, is tracked; rearranging the same selected column does not count as changing columns.
+Even with pointer reveal disabled, hovering the displayed bar/fallback icon or using a related popup keeps it open. Leaving hides it immediately once no trigger remains; the activity timer continues during interaction. Manual hiding, disabling, and native-fullscreen suppression take precedence. With no triggers selected, the bar stays hidden and Settings shows a reminder.
 
-Both settings support per-display overrides with global inheritance. Their UI controls are disabled in Always Visible mode, but saved preferences are preserved. Manual hiding, disabling, fullscreen suppression, and disconnecting a display cancel its pending activity reveal; reopening or enabling it does not replay old activity.
+Existing modifier-only configurations load as temporary bars with pointer reveal disabled. Explicit `visibility` and `revealOnHover` values take precedence.
 
 ### Additional appearance controls
 
