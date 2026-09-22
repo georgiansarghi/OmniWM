@@ -20,6 +20,7 @@ final class HiddenBarPanelController {
 
     var onActivate: ((MenuBarItemKey) -> Void)?
     var isExemptWindow: ((NSWindow) -> Bool)?
+    var onVisibilityChanged: (() -> Void)?
 
     private let model = HiddenBarPanelModel()
     private var panel: NonactivatingPanel?
@@ -28,6 +29,10 @@ final class HiddenBarPanelController {
     private weak var previousKeyWindow: NSWindow?
     private weak var previousFirstResponder: NSResponder?
     private(set) var isVisible = false
+
+    func isVisible(on monitor: Monitor) -> Bool {
+        isVisible && panel?.screen?.displayId == monitor.displayId
+    }
 
     func toggle(placement: HiddenBarPanelPlacement, items: [HiddenBarGlyph]) {
         if isVisible {
@@ -48,6 +53,7 @@ final class HiddenBarPanelController {
         dismissalMonitor.stop()
         OwnedWindowRegistry.shared.unregister(surfaceId: Self.surfaceId)
         panel?.orderOut(nil)
+        onVisibilityChanged?()
         if let keyWindow, keyWindow.isVisible {
             keyWindow.makeKey()
             if let firstResponder {
@@ -131,6 +137,7 @@ final class HiddenBarPanelController {
         )
         panel.makeKeyAndOrderFront(nil)
         isVisible = true
+        onVisibilityChanged?()
         dismissalMonitor.start(
             panels: [panel],
             isExemptWindow: { [weak self] window in

@@ -133,6 +133,12 @@ extension WMController {
         return workspaceBarManager.popupAttachment(on: monitor.id)?.edge ?? .below
     }
 
+    func hasOpenWorkspaceBarPopup(on monitor: Monitor) -> Bool {
+        systemStatsPopupController.isVisible(on: monitor.id)
+            || hiddenBarController.isPanelVisible(on: monitor)
+            || statusBarController?.isPanelVisible(on: monitor) == true
+    }
+
     func dismissSystemStatsPopup(anchoredTo monitorId: Monitor.ID) {
         systemStatsPopupController.dismissIfAnchored(to: monitorId)
     }

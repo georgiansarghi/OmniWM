@@ -21,8 +21,35 @@ struct MonitorBarSettingsSection: View {
         controller.updateWorkspaceBarSettings()
     }
 
+    private var activitySettings: some View {
+        let ms = monitorSettings
+        let resolved = settings.workspaceBar.resolved(for: monitor)
+        return Group {
+            OverridablePicker(
+                label: "Briefly Show After Changes", value: ms.activityReveal,
+                globalValue: settings.workspaceBar.activityReveal,
+                options: WorkspaceBarActivityReveal.allCases, displayName: { $0.displayName },
+                onChange: { newValue in updateSetting { $0.activityReveal = newValue } },
+                onReset: { updateSetting { $0.activityReveal = nil } }
+            )
+            OverridableSlider(
+                label: "Keep Visible After Last Change", value: ms.activityRevealSeconds,
+                globalValue: settings.workspaceBar.activityRevealSeconds,
+                range: 0.1 ... 10, step: 0.1, formatter: { String(format: "%.1f s", $0) },
+                onChange: { newValue in updateSetting { $0.activityRevealSeconds = newValue } },
+                onReset: { updateSetting { $0.activityRevealSeconds = nil } }
+            )
+            .disabled(resolved.activityReveal == .off)
+        }
+        .disabled(resolved.visibility != .temporary)
+        .help(
+            "In Show Temporarily mode, each qualifying change restarts the duration, independently of pointer reveal."
+        )
+    }
+
     var body: some View {
         let ms = monitorSettings
+        let resolved = settings.workspaceBar.resolved(for: monitor)
 
         Section("Workspace Bar") {
             OverridableToggle(
@@ -76,6 +103,39 @@ struct MonitorBarSettingsSection: View {
             .help(
                 "Reserve tiled layout space at the selected edge using the configured bar thickness."
             )
+
+            OverridablePicker(
+                label: "Visibility", value: ms.visibility,
+                globalValue: settings.workspaceBar.visibility,
+                options: WorkspaceBarVisibility.allCases, displayName: { $0.displayName },
+                onChange: { newValue in updateSetting { $0.visibility = newValue } },
+                onReset: { updateSetting { $0.visibility = nil } }
+            )
+            .help("Show Temporarily stays hidden until a selected trigger reveals it. It never reserves layout space.")
+
+            OverridableToggle(
+                label: "Pointer Approaches the Bar", value: ms.revealOnHover,
+                globalValue: settings.workspaceBar.revealOnHover,
+                onChange: { newValue in updateSetting { $0.revealOnHover = newValue } },
+                onReset: { updateSetting { $0.revealOnHover = nil } }
+            )
+            .disabled(resolved.visibility != .temporary)
+            .help(
+                "When off, the mouse cannot summon the bar, but it can keep an already-visible bar open for interaction."
+            )
+
+            activitySettings
+
+            if resolved.visibility == .temporary {
+                Text("Modifier hold: \(settings.workspaceBar.revealModifier.displayName) (configured globally)")
+                    .font(.caption).foregroundStyle(.secondary)
+                if !resolved.revealOnHover, resolved.activityReveal == .off,
+                   settings.workspaceBar.revealModifier == .off
+                {
+                    Text("No reveal triggers selected. Choose a trigger to show the bar.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
 
             OverridablePicker(
                 label: "Notch Mode",

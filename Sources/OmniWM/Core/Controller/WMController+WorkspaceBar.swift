@@ -159,10 +159,41 @@ extension WMController {
         }
     }
 
+    func syncWorkspaceBarRevealMonitor() {
+        guard hasStartedServices,
+              settings.workspaceBar.revealModifier != .off,
+              workspaceManager.monitors.contains(where: {
+                  let resolved = settings.workspaceBar.resolved(for: $0)
+                  return resolved.enabled && resolved.visibility == .temporary
+              })
+        else {
+            workspaceBarRevealMonitor.stop()
+            return
+        }
+
+        workspaceBarRevealMonitor.start(
+            modifier: settings.workspaceBar.revealModifier,
+            holdMilliseconds: settings.workspaceBar.revealHoldMilliseconds
+        )
+    }
+
+    func isWorkspaceBarConfiguredVisible(on monitor: Monitor, resolved: ResolvedBarSettings) -> Bool {
+        guard isWorkspaceBarEnabled(on: monitor, resolved: resolved) else { return false }
+        return resolved.visibility == .alwaysVisible
+            || isWorkspaceBarRevealHeld
+            || workspaceBarManager.isHoverRevealed(on: monitor.id)
+            || (resolved.activityReveal != .off && workspaceBarActivityController.state.revealed.contains(monitor.id))
+    }
+
     func isWorkspaceBarVisible(on monitor: Monitor, resolved: ResolvedBarSettings? = nil) -> Bool {
         let effective = resolved ?? settings.workspaceBar.resolved(for: monitor)
         guard isWorkspaceBarConfiguredVisible(on: monitor, resolved: effective) else { return false }
         return !isWorkspaceBarSuppressedByNativeFullscreen(on: monitor, resolved: effective)
+    }
+
+    func canTemporarilyRevealWorkspaceBar(on monitor: Monitor, resolved: ResolvedBarSettings) -> Bool {
+        resolved.visibility == .temporary && isWorkspaceBarEnabled(on: monitor, resolved: resolved)
+            && !isWorkspaceBarSuppressedByNativeFullscreen(on: monitor, resolved: resolved)
     }
 
     private func isWorkspaceBarSuppressedByNativeFullscreen(

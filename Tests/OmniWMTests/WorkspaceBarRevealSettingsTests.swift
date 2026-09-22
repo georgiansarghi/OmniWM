@@ -33,6 +33,33 @@ final class WorkspaceBarRevealSettingsTests: XCTestCase {
         let decoded = try SettingsTOMLCodec.decode(data)
         XCTAssertEqual(decoded.workspaceBar.revealModifier, .controlOptionCommand)
         XCTAssertEqual(decoded.workspaceBar.revealHoldMilliseconds, 350)
+        XCTAssertEqual(decoded.workspaceBar.visibility, .alwaysVisible)
+        XCTAssertTrue(decoded.workspaceBar.revealOnHover)
+    }
+
+    func testLegacyModifierSettingsKeepTheirVisibilityAfterLoadAndSave() throws {
+        for modifier in [WorkspaceBarRevealModifier.off, .option] {
+            var export = SettingsExport.defaults()
+            export.workspaceBar.revealModifier = modifier
+            export.monitorBarSettings = [MonitorBarSettings(monitorName: "Inherited")]
+            let text = String(decoding: try SettingsTOMLCodec.encode(export), as: UTF8.self)
+                .replacingOccurrences(of: "visibility = \"alwaysVisible\"\n", with: "")
+                .replacingOccurrences(of: "revealOnHover = true\n", with: "")
+            for schema in [2, 3] {
+                let legacy = schema == 3 ? text : "monitorRoutingOverrides = []\n" + text
+                    .replacingOccurrences(of: "schemaVersion = 3", with: "schemaVersion = 2")
+                    .replacingOccurrences(of: "arrangements = []\n", with: "")
+                let data = Data(legacy.utf8)
+                let decoded = try SettingsTOMLCodec.decode(data)
+                XCTAssertEqual(decoded.workspaceBar.visibility, modifier == .off ? .alwaysVisible : .temporary)
+                XCTAssertEqual(decoded.workspaceBar.revealOnHover, modifier == .off)
+                XCTAssertEqual(decoded.workspaceBar.activityReveal, .off)
+                XCTAssertNil(decoded.monitorBarSettings[0].visibility)
+                XCTAssertNil(decoded.monitorBarSettings[0].revealOnHover)
+                let saved = try SettingsTOMLCodec.encode(decoded, preservingUnknownKeysFrom: data)
+                XCTAssertEqual(try SettingsTOMLCodec.decode(saved).workspaceBar, decoded.workspaceBar)
+            }
+        }
     }
 
     @MainActor
@@ -54,6 +81,8 @@ final class WorkspaceBarRevealSettingsTests: XCTestCase {
     @MainActor
     func testRevealModeIsOverlayOnlyAndOffModePreservesReservation() {
         let settings = makeSettingsStore()
+        settings.workspaceBar.visibility = .temporary
+        settings.workspaceBar.revealOnHover = false
         settings.workspaceBar.enabled = true
         settings.workspaceBar.reserveLayoutSpace = true
         settings.workspaceBar.height = 24
@@ -83,7 +112,7 @@ final class WorkspaceBarRevealSettingsTests: XCTestCase {
         )
         XCTAssertEqual(controller.fullscreenLayoutFrame(for: monitor), monitor.visibleFrame)
 
-        settings.workspaceBar.revealModifier = .off
+        settings.workspaceBar.visibility = .alwaysVisible
         controller.setWorkspaceBarRevealHeld(false)
         XCTAssertTrue(controller.isWorkspaceBarVisible(on: monitor))
         XCTAssertEqual(
@@ -104,6 +133,8 @@ final class WorkspaceBarRevealSettingsTests: XCTestCase {
         settings.gaps.outerGapTop = 46
         settings.gaps.outerGapBottom = 14
         settings.gaps.fullscreenUsesOuterGaps = true
+        settings.workspaceBar.visibility = .temporary
+        settings.workspaceBar.revealOnHover = false
         settings.workspaceBar.enabled = true
         settings.workspaceBar.reserveLayoutSpace = true
         settings.workspaceBar.height = 24
@@ -126,7 +157,7 @@ final class WorkspaceBarRevealSettingsTests: XCTestCase {
         XCTAssertEqual(controller.insetWorkingFrame(for: monitor), overlayFrame)
         XCTAssertEqual(controller.fullscreenLayoutFrame(for: monitor), overlayFrame)
 
-        settings.workspaceBar.revealModifier = .off
+        settings.workspaceBar.visibility = .alwaysVisible
         controller.setWorkspaceBarRevealHeld(false)
         let reservedFrame = CGRect(x: 12, y: 14, width: 1416, height: 816)
         XCTAssertEqual(controller.insetWorkingFrame(for: monitor), reservedFrame)

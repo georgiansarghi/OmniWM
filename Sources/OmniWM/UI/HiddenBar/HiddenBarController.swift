@@ -19,6 +19,16 @@ final class HiddenBarController {
     private let hider = AssessmentModeHider()
     private let itemService: MenuBarItemService
     private let panel = HiddenBarPanelController()
+
+    var onPanelVisibilityChanged: (() -> Void)? {
+        get { panel.onVisibilityChanged }
+        set { panel.onVisibilityChanged = newValue }
+    }
+
+    func isPanelVisible(on monitor: Monitor) -> Bool {
+        panel.isVisible(on: monitor)
+    }
+
     private let iconCache = HiddenBarIconCache()
     private let forwarder: HiddenBarClickForwarder
 

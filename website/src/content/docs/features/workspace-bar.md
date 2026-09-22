@@ -25,7 +25,8 @@ Configure position, height, and appearance in Settings:
 
 - **Position** — overlap the menu bar, sit below it, or dock at **Bottom**, **Left**, or **Right**. Available globally and per display.
 - **Notch handling** — `Off`, `Move Below Menu Bar`, or a split layout (`Split — Active Left` / `Split — Active Right`) that flows the bar around the notch with your chosen side for the active workspace.
-- **Reveal on modifier hold** — keep the bar hidden until you hold a chosen modifier.
+- **Visibility** — keep the bar always visible, or show it temporarily using independent pointer, activity, and modifier triggers. See [Visibility and reveal triggers](#visibility-and-reveal-triggers).
+- **Reveal on modifier hold** — reveal temporary bars while holding a chosen modifier, independently of pointer or activity reveal.
 - **Hide empty workspaces** — omit chips for workspaces with no windows.
 - **Reserve layout space** — reserve room for the bar so tiled windows never sit underneath it.
 - **Hide in Native Fullscreen** — hide the bar on a monitor while that monitor shows a macOS native fullscreen window, and bring it back on exit; reserved tiled layout space is left untouched so windows do not shuffle around the fullscreen session.
@@ -45,7 +46,39 @@ Placement follows the usable display edge, avoiding a visible Dock. X/Y offsets 
 
 Side bars stack upright labels and icons and scroll vertically when needed. **Bar Thickness** (`height` in TOML) controls their width. Stats, hidden-icon panels, and the fallback OmniWM menu open inward from the displayed bar or icon.
 
-Notch modes, including **Fill Left of Notch**, are ignored at bottom/left/right without changing your saved preference. Existing visibility settings still apply; modifier-hold bars remain overlay-only.
+Notch modes, including **Fill Left of Notch**, are ignored at bottom/left/right without changing your saved preference. Existing visibility settings still apply; temporary bars remain overlay-only.
+
+### Visibility and reveal triggers
+
+**Unreleased** — requires a source build containing these changes.
+
+Choose **Visibility** globally or per display:
+
+- **Always Visible** (default) ignores reveal triggers without clearing preferences.
+- **Show Temporarily** hides the bar until a selected trigger reveals it. Temporary bars never reserve layout space or resize tiled/layout-fullscreen windows.
+
+Triggers are independent and can be combined:
+
+- **Pointer Approaches the Bar** (`revealOnHover`, default `true`) reveals immediately near the hidden bar or its edge segment, not the entire display edge.
+- **Briefly Show After Changes** (`activityReveal`, default `"off"`) reveals after workspace changes (`"workspace"`), workspace or selected Niri column changes (`"workspaceAndColumn"`), or workspace/focused-window changes (`"focus"`). No-op commands and animation frames do not count.
+- **Reveal on Modifier Hold** (`revealModifier`) applies globally to temporary displays, using the configured hold delay.
+
+For an activity-only bar:
+
+```toml
+[workspaceBar]
+visibility = "temporary"
+revealOnHover = false
+activityReveal = "workspaceAndColumn"
+activityRevealSeconds = 1.0
+revealModifier = "off"
+```
+
+Each qualifying change restarts **Keep Visible After Last Change** (default 1 second; range 0.1–10 seconds) on the affected display. Pointer and activity settings support per-display overrides.
+
+Even with pointer reveal disabled, hovering the displayed bar/fallback icon or using a related popup keeps it open. Leaving hides it immediately once no trigger remains; the activity timer continues during interaction. Manual hiding, disabling, and native-fullscreen suppression take precedence. With no triggers selected, the bar stays hidden and Settings shows a reminder.
+
+Existing modifier-only configurations load as temporary bars with pointer reveal disabled. Explicit `visibility` and `revealOnHover` values take precedence.
 
 ### Additional appearance controls
 
