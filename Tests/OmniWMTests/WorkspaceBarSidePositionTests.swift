@@ -105,8 +105,10 @@ final class WorkspaceBarSidePositionTests: XCTestCase {
             settings.gaps.fullscreenUsesOuterGaps = true
             XCTAssertEqual(controller.layoutFrames(for: monitor, scale: 1).fullscreenLayoutFrame, frames.workingFrame)
             settings.gaps.fullscreenUsesOuterGaps = false
+            settings.workspaceBar.visibility = .temporary
             settings.workspaceBar.revealModifier = .option
             XCTAssertEqual(controller.layoutFrames(for: monitor, scale: 1).fullscreenLayoutFrame, monitor.visibleFrame)
+            settings.workspaceBar.visibility = .alwaysVisible
             settings.workspaceBar.revealModifier = .off
             settings.workspaceBar.reserveLayoutSpace = false
             XCTAssertEqual(controller.layoutFrames(for: monitor, scale: 1).fullscreenLayoutFrame, monitor.visibleFrame)

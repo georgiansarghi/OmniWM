@@ -54,6 +54,8 @@ final class WorkspaceBarRevealSettingsTests: XCTestCase {
     @MainActor
     func testRevealModeIsOverlayOnlyAndOffModePreservesReservation() {
         let settings = makeSettingsStore()
+        settings.workspaceBar.visibility = .temporary
+        settings.workspaceBar.revealOnHover = false
         settings.workspaceBar.enabled = true
         settings.workspaceBar.reserveLayoutSpace = true
         settings.workspaceBar.height = 24
@@ -83,7 +85,7 @@ final class WorkspaceBarRevealSettingsTests: XCTestCase {
         )
         XCTAssertEqual(controller.fullscreenLayoutFrame(for: monitor), monitor.visibleFrame)
 
-        settings.workspaceBar.revealModifier = .off
+        settings.workspaceBar.visibility = .alwaysVisible
         controller.setWorkspaceBarRevealHeld(false)
         XCTAssertTrue(controller.isWorkspaceBarVisible(on: monitor))
         XCTAssertEqual(
@@ -104,6 +106,8 @@ final class WorkspaceBarRevealSettingsTests: XCTestCase {
         settings.gaps.outerGapTop = 46
         settings.gaps.outerGapBottom = 14
         settings.gaps.fullscreenUsesOuterGaps = true
+        settings.workspaceBar.visibility = .temporary
+        settings.workspaceBar.revealOnHover = false
         settings.workspaceBar.enabled = true
         settings.workspaceBar.reserveLayoutSpace = true
         settings.workspaceBar.height = 24
@@ -126,7 +130,7 @@ final class WorkspaceBarRevealSettingsTests: XCTestCase {
         XCTAssertEqual(controller.insetWorkingFrame(for: monitor), overlayFrame)
         XCTAssertEqual(controller.fullscreenLayoutFrame(for: monitor), overlayFrame)
 
-        settings.workspaceBar.revealModifier = .off
+        settings.workspaceBar.visibility = .alwaysVisible
         controller.setWorkspaceBarRevealHeld(false)
         let reservedFrame = CGRect(x: 12, y: 14, width: 1416, height: 816)
         XCTAssertEqual(controller.insetWorkingFrame(for: monitor), reservedFrame)

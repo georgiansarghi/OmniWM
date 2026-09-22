@@ -106,7 +106,7 @@ final class WMController {
     @ObservationIgnored
     private(set) var isWorkspaceBarRevealHeld = false
     @ObservationIgnored
-    private lazy var workspaceBarRevealMonitor: WorkspaceBarRevealMonitor = {
+    private(set) lazy var workspaceBarRevealMonitor: WorkspaceBarRevealMonitor = {
         let monitor = WorkspaceBarRevealMonitor()
         monitor.onRevealChanged = { [weak self] revealed in
             self?.setWorkspaceBarRevealHeld(revealed)
@@ -370,21 +370,6 @@ extension WMController {
 
     func setMoveMouseToFocusedWindow(_ enabled: Bool) {
         moveMouseToFocusedWindowEnabled = enabled
-    }
-
-    func syncWorkspaceBarRevealMonitor() {
-        guard hasStartedServices,
-              settings.workspaceBar.revealModifier != .off,
-              workspaceBarRefreshIsEnabled
-        else {
-            workspaceBarRevealMonitor.stop()
-            return
-        }
-
-        workspaceBarRevealMonitor.start(
-            modifier: settings.workspaceBar.revealModifier,
-            holdMilliseconds: settings.workspaceBar.revealHoldMilliseconds
-        )
     }
 
     func setWorkspaceBarRevealHeld(_ revealed: Bool) {

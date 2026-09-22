@@ -29,7 +29,8 @@ struct MonitorBarSettings: MonitorSettingsType {
     var showAccentHighlights: Bool?
     var xOffset: Double?
     var yOffset: Double?
-    var autoHide: Bool?
+    var visibility: WorkspaceBarVisibility?
+    var revealOnHover: Bool?
     var activityReveal: WorkspaceBarActivityReveal?
     var activityRevealSeconds: Double?
 
@@ -57,7 +58,8 @@ struct MonitorBarSettings: MonitorSettingsType {
         showAccentHighlights: Bool? = nil,
         xOffset: Double? = nil,
         yOffset: Double? = nil,
-        autoHide: Bool? = nil,
+        visibility: WorkspaceBarVisibility? = nil,
+        revealOnHover: Bool? = nil,
         activityReveal: WorkspaceBarActivityReveal? = nil,
         activityRevealSeconds: Double? = nil
     ) {
@@ -84,7 +86,8 @@ struct MonitorBarSettings: MonitorSettingsType {
         self.showAccentHighlights = showAccentHighlights
         self.xOffset = xOffset
         self.yOffset = yOffset
-        self.autoHide = autoHide
+        self.visibility = visibility
+        self.revealOnHover = revealOnHover
         self.activityReveal = activityReveal
         self.activityRevealSeconds = activityRevealSeconds.map(WorkspaceBarActivityReveal.validatedDuration)
     }
@@ -94,7 +97,7 @@ struct MonitorBarSettings: MonitorSettingsType {
         case enabled, showLabels, showFloatingWindows, deduplicateAppIcons
         case hideEmptyWorkspaces, reserveLayoutSpace, notchMode, notchActiveZoneWidth, position, windowLevel
         case height, backgroundOpacity, inactiveIconOpacity, transparentBackground, solidBlackBackground,
-             showItemBackgrounds, showAccentHighlights, xOffset, yOffset, autoHide, activityReveal,
+             showItemBackgrounds, showAccentHighlights, xOffset, yOffset, visibility, revealOnHover, activityReveal,
              activityRevealSeconds
     }
 
@@ -123,7 +126,8 @@ struct MonitorBarSettings: MonitorSettingsType {
         showAccentHighlights = try container.decodeIfPresent(Bool.self, forKey: .showAccentHighlights)
         xOffset = try container.decodeIfPresent(Double.self, forKey: .xOffset)
         yOffset = try container.decodeIfPresent(Double.self, forKey: .yOffset)
-        autoHide = try container.decodeIfPresent(Bool.self, forKey: .autoHide)
+        visibility = try container.decodeIfPresent(WorkspaceBarVisibility.self, forKey: .visibility)
+        revealOnHover = try container.decodeIfPresent(Bool.self, forKey: .revealOnHover)
         activityReveal = try container.decodeIfPresent(WorkspaceBarActivityReveal.self, forKey: .activityReveal)
         activityRevealSeconds = try container.decodeIfPresent(Double.self, forKey: .activityRevealSeconds)
             .map(WorkspaceBarActivityReveal.validatedDuration)
@@ -159,7 +163,8 @@ struct MonitorBarSettings: MonitorSettingsType {
         try container.encodeIfPresent(showAccentHighlights, forKey: .showAccentHighlights)
         try container.encodeIfPresent(xOffset, forKey: .xOffset)
         try container.encodeIfPresent(yOffset, forKey: .yOffset)
-        try container.encodeIfPresent(autoHide, forKey: .autoHide)
+        try container.encodeIfPresent(visibility, forKey: .visibility)
+        try container.encodeIfPresent(revealOnHover, forKey: .revealOnHover)
         try container.encodeIfPresent(activityReveal, forKey: .activityReveal)
         try container.encodeIfPresent(activityRevealSeconds, forKey: .activityRevealSeconds)
     }
@@ -189,7 +194,8 @@ struct ResolvedBarSettings {
     let yOffset: Double
     let accentColor: SettingsColor?
     let textColor: SettingsColor?
-    var autoHide = false
+    var visibility: WorkspaceBarVisibility = .alwaysVisible
+    var revealOnHover = true
     var activityReveal: WorkspaceBarActivityReveal = .off
     var activityRevealSeconds: Double = 1
 }

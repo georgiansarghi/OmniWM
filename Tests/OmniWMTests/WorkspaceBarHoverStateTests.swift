@@ -113,20 +113,60 @@ final class WorkspaceBarHoverStateTests: XCTestCase {
 
     func testAssociatedFallbackIconKeepsVisibleBarOpenButCannotRevealItFromElsewhere() {
         let icon = CGRect(x: frame.minX - 40, y: frame.minY, width: 32, height: 32)
-        var state = WorkspaceBarHoverState()
+        for revealOnHover in [false, true] {
+            var state = WorkspaceBarHoverState()
+            let hidden = WorkspaceBarHoverTarget(
+                monitor: monitor, frames: [frame], position: .bottom, isVisible: false, isPinned: false,
+                associatedFrames: [icon], revealOnHover: revealOnHover
+            )
+            let pointer = CGPoint(x: icon.midX, y: icon.midY)
+            state.update(targets: [hidden], pointer: pointer)
+            XCTAssertTrue(state.revealed.isEmpty)
+            let visible = WorkspaceBarHoverTarget(
+                monitor: monitor, frames: [frame], position: .bottom, isVisible: true, isPinned: false,
+                associatedFrames: [icon], revealOnHover: revealOnHover
+            )
+            state.update(targets: [visible], pointer: pointer)
+            XCTAssertEqual(state.revealed, [monitor.id])
+        }
+    }
+
+    func testHoverDisabledCannotSummonOrRetainAtTheEdgeButCanRetainDisplayedControls() {
+        let floatingFrame = CGRect(x: -600, y: -500, width: 200, height: 32)
         let hidden = WorkspaceBarHoverTarget(
-            monitor: monitor, frames: [frame], position: .bottom, isVisible: false, isPinned: false,
-            associatedFrames: [icon]
+            monitor: monitor, frames: [floatingFrame], position: .bottom,
+            isVisible: false, isPinned: false, revealOnHover: false
         )
-        let pointer = CGPoint(x: icon.midX, y: icon.midY)
-        state.update(targets: [hidden], pointer: pointer)
-        XCTAssertTrue(state.revealed.isEmpty)
         let visible = WorkspaceBarHoverTarget(
-            monitor: monitor, frames: [frame], position: .bottom, isVisible: true, isPinned: false,
-            associatedFrames: [icon]
+            monitor: monitor, frames: [floatingFrame], position: .bottom,
+            isVisible: true, isPinned: false, revealOnHover: false
         )
-        state.update(targets: [visible], pointer: pointer)
+        var state = WorkspaceBarHoverState()
+        XCTAssertTrue(hidden.activationRegions.isEmpty)
+        state.update(targets: [hidden], pointer: floatingFrame.center)
+        XCTAssertTrue(state.revealed.isEmpty)
+        state.update(targets: [visible], pointer: near)
+        XCTAssertTrue(state.revealed.isEmpty)
+        state.update(targets: [visible], pointer: floatingFrame.center)
         XCTAssertEqual(state.revealed, [monitor.id])
+        state.update(targets: [visible], pointer: away)
+        XCTAssertTrue(state.revealed.isEmpty)
+    }
+
+    func testDisablingHoverWhilePointerIsAtTheEdgeClearsItsReveal() {
+        var state = WorkspaceBarHoverState()
+        let floatingFrame = CGRect(x: -600, y: -500, width: 200, height: 32)
+        let enabled = WorkspaceBarHoverTarget(
+            monitor: monitor, frames: [floatingFrame], position: .bottom, isVisible: false, isPinned: false
+        )
+        state.update(targets: [enabled], pointer: near)
+        XCTAssertEqual(state.revealed, [monitor.id])
+        let disabled = WorkspaceBarHoverTarget(
+            monitor: monitor, frames: [floatingFrame], position: .bottom,
+            isVisible: true, isPinned: false, revealOnHover: false
+        )
+        state.update(targets: [disabled], pointer: near)
+        XCTAssertTrue(state.revealed.isEmpty)
     }
 
     func testSplitIslandsDoNotActivateInTheNotchGap() {

@@ -41,9 +41,11 @@ struct MonitorBarSettingsSection: View {
             )
             .disabled(resolved.activityReveal == .off)
         }
-        .disabled(!resolved.autoHide)
-        .help("Requires Auto-Hide. Repeated workspace, Niri column, or managed focus changes restart the duration; "
-            + "hover delays remain zero.")
+        .disabled(resolved.visibility != .temporary)
+        .help(
+            "Requires Show Temporarily, not pointer reveal. Repeated workspace, Niri column, or focus changes restart the duration; "
+                + "hover delays remain zero."
+        )
     }
 
     var body: some View {
@@ -102,17 +104,39 @@ struct MonitorBarSettingsSection: View {
                 "Reserve tiled layout space at the selected edge using the configured bar thickness."
             )
 
-            OverridableToggle(
-                label: "Auto-Hide on Pointer Leave",
-                value: ms.autoHide,
-                globalValue: settings.workspaceBar.autoHide,
-                onChange: { newValue in updateSetting { $0.autoHide = newValue } },
-                onReset: { updateSetting { $0.autoHide = nil } }
+            OverridablePicker(
+                label: "Visibility", value: ms.visibility,
+                globalValue: settings.workspaceBar.visibility,
+                options: WorkspaceBarVisibility.allCases, displayName: { $0.displayName },
+                onChange: { newValue in updateSetting { $0.visibility = newValue } },
+                onReset: { updateSetting { $0.visibility = nil } }
             )
-            .help("Reveal immediately near the bar; hide immediately when the pointer leaves its keep-open area. "
-                + "Stays open for popups and never reserves layout space.")
+            .help("Show Temporarily stays hidden until a selected trigger reveals it. It never reserves layout space.")
+
+            OverridableToggle(
+                label: "Pointer Approaches the Bar", value: ms.revealOnHover,
+                globalValue: settings.workspaceBar.revealOnHover,
+                onChange: { newValue in updateSetting { $0.revealOnHover = newValue } },
+                onReset: { updateSetting { $0.revealOnHover = nil } }
+            )
+            .disabled(settings.workspaceBar.resolved(for: monitor).visibility != .temporary)
+            .help(
+                "When off, the mouse cannot summon the bar, but it can keep an already-visible bar open for interaction."
+            )
 
             activitySettings
+
+            if settings.workspaceBar.resolved(for: monitor).visibility == .temporary {
+                Text("Modifier hold: \(settings.workspaceBar.revealModifier.displayName) (configured globally)")
+                    .font(.caption).foregroundStyle(.secondary)
+                if !settings.workspaceBar.resolved(for: monitor).revealOnHover,
+                   settings.workspaceBar.resolved(for: monitor).activityReveal == .off,
+                   settings.workspaceBar.revealModifier == .off
+                {
+                    Text("No reveal triggers selected. Choose a trigger to show the bar.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
 
             OverridablePicker(
                 label: "Notch Mode",

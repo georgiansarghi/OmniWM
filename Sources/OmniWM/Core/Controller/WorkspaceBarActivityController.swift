@@ -56,7 +56,7 @@ final class WorkspaceBarActivityController {
             }
             return WorkspaceBarActivityTarget(
                 monitorId: monitor.id, workspaceId: workspaceId, columnId: columnId, focusedToken: focusedToken,
-                allowed: controller.canAutoRevealWorkspaceBar(on: monitor, resolved: resolved),
+                allowed: controller.canTemporarilyRevealWorkspaceBar(on: monitor, resolved: resolved),
                 mode: resolved.activityReveal, duration: resolved.activityRevealSeconds
             )
         }

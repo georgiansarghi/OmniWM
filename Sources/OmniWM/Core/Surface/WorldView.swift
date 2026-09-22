@@ -124,7 +124,7 @@ struct WorldView {
                         textColor: resolved.textColor,
                         orientation: resolved.position.isVertical ? .vertical : .horizontal
                     ),
-                    retainWhileHidden: controller.canAutoRevealWorkspaceBar(on: monitor, resolved: resolved)
+                    retainWhileHidden: controller.canTemporarilyRevealWorkspaceBar(on: monitor, resolved: resolved)
                 )
             )
         }

@@ -99,14 +99,14 @@ final class WorkspaceBarAutoHideIntegrationTests: XCTestCase {
         XCTAssertTrue(controller.isWorkspaceBarVisible(on: fixture.monitor))
         XCTAssertTrue(controller.toggleWorkspaceBarVisibility())
         XCTAssertFalse(controller.isWorkspaceBarVisible(on: fixture.monitor))
-        XCTAssertFalse(controller.canAutoRevealWorkspaceBar(
+        XCTAssertFalse(controller.canTemporarilyRevealWorkspaceBar(
             on: fixture.monitor,
             resolved: bar.resolved(for: fixture.monitor)
         ))
         XCTAssertTrue(controller.toggleWorkspaceBarVisibility())
         bar.enabled = false
         XCTAssertFalse(controller.isWorkspaceBarVisible(on: fixture.monitor))
-        XCTAssertFalse(controller.canAutoRevealWorkspaceBar(
+        XCTAssertFalse(controller.canTemporarilyRevealWorkspaceBar(
             on: fixture.monitor,
             resolved: bar.resolved(for: fixture.monitor)
         ))
@@ -117,18 +117,18 @@ final class WorkspaceBarAutoHideIntegrationTests: XCTestCase {
         ))
         bar.hideInNativeFullscreen = true
         XCTAssertFalse(controller.isWorkspaceBarVisible(on: fixture.monitor))
-        XCTAssertFalse(controller.canAutoRevealWorkspaceBar(
+        XCTAssertFalse(controller.canTemporarilyRevealWorkspaceBar(
             on: fixture.monitor,
             resolved: bar.resolved(for: fixture.monitor)
         ))
         bar.hideInNativeFullscreen = false
-        XCTAssertTrue(controller.canAutoRevealWorkspaceBar(
+        XCTAssertTrue(controller.canTemporarilyRevealWorkspaceBar(
             on: fixture.monitor,
             resolved: bar.resolved(for: fixture.monitor)
         ))
         bar.position = .overlappingMenuBar
         bar.notchMode = .fillLeftOfNotch
-        XCTAssertFalse(controller.canAutoRevealWorkspaceBar(
+        XCTAssertFalse(controller.canTemporarilyRevealWorkspaceBar(
             on: fixture.monitor,
             resolved: bar.resolved(for: fixture.monitor)
         ))
@@ -174,7 +174,7 @@ final class WorkspaceBarAutoHideIntegrationTests: XCTestCase {
                 runtimeState: RuntimeStateStore(directory: root.appendingPathComponent("state"), deferSaves: false),
                 autosaveEnabled: false
             )
-            settings.workspaceBar.autoHide = true
+            settings.workspaceBar.visibility = .temporary
             settings.workspaceBar.position = .bottom
             settings.workspaceBar.reserveLayoutSpace = true
             settings.workspaceBar.height = 32

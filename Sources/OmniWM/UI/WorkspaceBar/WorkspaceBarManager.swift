@@ -19,7 +19,7 @@ final class WorkspaceBarManager {
     }
 
     private var barsByMonitor: [Monitor.ID: WorkspaceBarInstance] = [:]
-    private var autoHideMonitorIds: Set<Monitor.ID> = []
+    private var temporaryMonitorIds: Set<Monitor.ID> = []
     private lazy var hoverMonitor: WorkspaceBarHoverMonitor = {
         let monitor = WorkspaceBarHoverMonitor()
         monitor.targets = { [weak self] in self?.hoverTargets() ?? [] }
@@ -47,7 +47,7 @@ final class WorkspaceBarManager {
     func apply(_ bars: [DesiredBarSurface]) {
         guard controller != nil, settings != nil else { return }
 
-        autoHideMonitorIds = Set(bars.filter(\.retainWhileHidden).map { $0.monitor.id })
+        temporaryMonitorIds = Set(bars.filter(\.retainWhileHidden).map { $0.monitor.id })
         var staleMonitorIds = Set(barsByMonitor.keys)
         for bar in bars where bar.visible || bar.retainWhileHidden {
             staleMonitorIds.remove(bar.monitor.id)
@@ -65,7 +65,7 @@ final class WorkspaceBarManager {
         for monitorId in staleMonitorIds {
             removeBarForMonitor(monitorId)
         }
-        if autoHideMonitorIds.isEmpty { hoverMonitor.stop() } else { hoverMonitor.start() }
+        if temporaryMonitorIds.isEmpty { hoverMonitor.stop() } else { hoverMonitor.start() }
     }
 
     func updateAppearance() {
@@ -330,7 +330,7 @@ final class WorkspaceBarManager {
 extension WorkspaceBarManager {
     func cleanup() {
         controller?.workspaceBarActivityController.stop()
-        autoHideMonitorIds = []
+        temporaryMonitorIds = []
         hoverMonitor.stop()
         for monitorId in Array(barsByMonitor.keys) {
             removeBarForMonitor(monitorId)
@@ -356,10 +356,11 @@ extension WorkspaceBarManager {
 
     private func hoverTargets() -> [WorkspaceBarHoverTarget] {
         guard let controller, let settings else { return [] }
-        return autoHideMonitorIds.compactMap { id in
+        return temporaryMonitorIds.compactMap { id in
             guard let instance = barsByMonitor[id] else { return nil }
             let resolved = settings.workspaceBar.resolved(for: instance.monitor)
-            guard controller.canAutoRevealWorkspaceBar(on: instance.monitor, resolved: resolved) else { return nil }
+            guard controller.canTemporarilyRevealWorkspaceBar(on: instance.monitor, resolved: resolved)
+            else { return nil }
             let panels = [instance.primary.panel, instance.secondary?.panel].compactMap { $0 }
             return WorkspaceBarHoverTarget(
                 monitor: instance.monitor,
@@ -368,7 +369,8 @@ extension WorkspaceBarManager {
                 isVisible: instance.primary.panel.isVisible,
                 isPinned: panels.contains { $0.attachedSheet != nil }
                     || controller.hasOpenWorkspaceBarPopup(on: instance.monitor),
-                associatedFrames: [controller.hiddenBarController.statusItems.fallbackFrame(on: id)].compactMap { $0 }
+                associatedFrames: [controller.hiddenBarController.statusItems.fallbackFrame(on: id)].compactMap { $0 },
+                revealOnHover: resolved.revealOnHover
             )
         }
     }

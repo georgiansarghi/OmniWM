@@ -24,7 +24,7 @@ final class WorkspaceBarActivitySettingsTests: XCTestCase {
     func testEveryModeAndMonitorOverridesRoundTripThroughTOML() throws {
         for mode in WorkspaceBarActivityReveal.allCases {
             var export = SettingsExport.defaults()
-            export.workspaceBar.autoHide = true
+            export.workspaceBar.visibility = .temporary
             export.workspaceBar.activityReveal = mode
             export.workspaceBar.activityRevealSeconds = 1.5
             export.monitorBarSettings = [
@@ -49,16 +49,16 @@ final class WorkspaceBarActivitySettingsTests: XCTestCase {
             frame: CGRect(x: 0, y: 0, width: 1000, height: 800),
             visibleFrame: CGRect(x: 0, y: 0, width: 1000, height: 770), hasNotch: false, name: "Test"
         )
-        settings.autoHide = true
+        settings.visibility = .temporary
         settings.activityReveal = .workspaceAndColumn
         settings.activityRevealSeconds = 1.5
         settings.update(MonitorBarSettings(monitorName: "Test", activityReveal: .off), for: monitor)
         XCTAssertEqual(settings.resolved(for: monitor).activityReveal, .off)
         XCTAssertEqual(settings.resolved(for: monitor).activityRevealSeconds, 1.5)
         settings.remove(for: monitor)
-        settings.autoHide = false
+        settings.visibility = .alwaysVisible
         XCTAssertEqual(settings.resolved(for: monitor).activityReveal, .workspaceAndColumn)
-        settings.autoHide = true
+        settings.visibility = .temporary
         XCTAssertEqual(settings.export().activityReveal, .workspaceAndColumn)
         XCTAssertEqual(settings.export().activityRevealSeconds, 1.5)
     }

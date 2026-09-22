@@ -60,6 +60,11 @@ private struct GlobalBarSettingsSection: View {
     @Bindable var controller: WMController
     @State private var pendingAppearanceSync: Task<Void, Never>?
 
+    private var hasTemporaryScope: Bool {
+        settings.workspaceBar.visibility == .temporary
+            || settings.workspaceBar.monitorOverrides.contains { $0.visibility == .temporary }
+    }
+
     private var activitySettings: some View {
         Group {
             Picker("Briefly Show After Changes", selection: Bindable(settings.workspaceBar).activityReveal) {
@@ -81,9 +86,11 @@ private struct GlobalBarSettingsSection: View {
                 controller.updateWorkspaceBarSettings()
             }
         }
-        .disabled(!settings.workspaceBar.autoHide)
-        .help("Requires Auto-Hide. Actual workspace, Niri column, or managed focus changes reveal the bar immediately. "
-            + "Repeated changes restart the duration; hover delays remain zero.")
+        .disabled(settings.workspaceBar.visibility != .temporary)
+        .help(
+            "Requires Show Temporarily, not pointer reveal. Actual workspace, Niri column, or focus changes show the bar. "
+                + "Repeated changes restart the duration; hover delays remain zero."
+        )
     }
 
     var body: some View {
@@ -123,16 +130,35 @@ private struct GlobalBarSettingsSection: View {
                         "Reserve tiled layout space at the selected edge using the configured bar thickness."
                     )
 
-                Toggle("Auto-Hide on Pointer Leave", isOn: Bindable(settings.workspaceBar).autoHide)
-                    .onChange(of: settings.workspaceBar.autoHide) { _, _ in
+                Picker("Visibility", selection: Bindable(settings.workspaceBar).visibility) {
+                    ForEach(WorkspaceBarVisibility.allCases) { mode in
+                        Text(mode.displayName).tag(mode)
+                    }
+                }
+                .onChange(of: settings.workspaceBar.visibility) { _, _ in
+                    controller.updateWorkspaceBarSettings()
+                }
+                .help(
+                    "Show Temporarily keeps the bar hidden until a selected trigger reveals it, without moving windows."
+                )
+
+                Toggle("Pointer Approaches the Bar", isOn: Bindable(settings.workspaceBar).revealOnHover)
+                    .disabled(settings.workspaceBar.visibility != .temporary)
+                    .onChange(of: settings.workspaceBar.revealOnHover) { _, _ in
                         controller.updateWorkspaceBarSettings()
                     }
-                    .help(
-                        "Reveal immediately near the bar; hide immediately when the pointer leaves its keep-open area. "
-                            + "Stays open for popups and never reserves layout space."
-                    )
+                    .help("Reveal at the bar's edge with zero delay. When off, the mouse cannot summon it, "
+                        + "but hovering an already-visible bar or using its popups keeps it open.")
 
                 activitySettings
+
+                if settings.workspaceBar.visibility == .temporary,
+                   !settings.workspaceBar.revealOnHover, settings.workspaceBar.activityReveal == .off,
+                   settings.workspaceBar.revealModifier == .off
+                {
+                    Text("No reveal triggers selected. Choose a trigger to show the bar.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
 
                 Picker("Reveal on Modifier Hold", selection: Bindable(settings.workspaceBar).revealModifier) {
                     ForEach(WorkspaceBarRevealModifier.allCases, id: \.self) { modifier in
@@ -142,8 +168,8 @@ private struct GlobalBarSettingsSection: View {
                 .onChange(of: settings.workspaceBar.revealModifier) { _, _ in
                     controller.updateWorkspaceBarSettings()
                 }
-                .help("Show the bar as an overlay while these modifiers are held. "
-                    + "With Auto-Hide enabled, hovering can also reveal it.")
+                .disabled(!hasTemporaryScope)
+                .help("Applies globally to Show Temporarily displays, independently of mouse or activity reveal.")
 
                 if settings.workspaceBar.revealModifier != .off {
                     SettingsSliderRow(
@@ -153,6 +179,7 @@ private struct GlobalBarSettingsSection: View {
                         step: 50,
                         valueText: "\(Int(settings.workspaceBar.revealHoldMilliseconds)) ms"
                     )
+                    .disabled(!hasTemporaryScope)
                     .onChange(of: settings.workspaceBar.revealHoldMilliseconds) { _, _ in
                         controller.updateWorkspaceBarSettings()
                     }
@@ -325,7 +352,9 @@ private struct GlobalBarSettingsSection: View {
             }
         }
     }
+}
 
+extension GlobalBarSettingsSection {
     private var customAccentColorBinding: Binding<Bool> {
         Binding(
             get: { settings.workspaceBar.accentColor != nil },

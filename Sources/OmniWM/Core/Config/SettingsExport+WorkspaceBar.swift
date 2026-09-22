@@ -32,7 +32,8 @@ extension SettingsExport {
         var yOffset: Double
         var accentColor: SettingsColor?
         var textColor: SettingsColor?
-        var autoHide = false
+        var visibility: WorkspaceBarVisibility = .alwaysVisible
+        var revealOnHover = true
         var activityReveal: WorkspaceBarActivityReveal = .off
         var activityRevealSeconds: Double = 1
     }
@@ -73,7 +74,9 @@ extension SettingsExport.WorkspaceBar {
         yOffset = try container.decode(Double.self, forKey: .yOffset)
         accentColor = try container.decodeIfPresent(SettingsColor.self, forKey: .accentColor)
         textColor = try container.decodeIfPresent(SettingsColor.self, forKey: .textColor)
-        autoHide = try container.decodeIfPresent(Bool.self, forKey: .autoHide) ?? defaults.autoHide
+        visibility = try container.decodeIfPresent(WorkspaceBarVisibility.self, forKey: .visibility) ?? defaults
+            .visibility
+        revealOnHover = try container.decodeIfPresent(Bool.self, forKey: .revealOnHover) ?? defaults.revealOnHover
         activityReveal = try container.decodeIfPresent(WorkspaceBarActivityReveal.self, forKey: .activityReveal)
             ?? defaults.activityReveal
         activityRevealSeconds = WorkspaceBarActivityReveal.validatedDuration(

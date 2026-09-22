@@ -708,8 +708,10 @@ final class GapSettingsTests: XCTestCase {
         settings.gaps.fullscreenUsesOuterGaps = true
         XCTAssertEqual(controller.fullscreenLayoutFrame(for: monitor), workingFrame)
         settings.gaps.fullscreenUsesOuterGaps = false
+        settings.workspaceBar.visibility = .temporary
         settings.workspaceBar.revealModifier = .option
         XCTAssertEqual(controller.fullscreenLayoutFrame(for: monitor), monitor.visibleFrame)
+        settings.workspaceBar.visibility = .alwaysVisible
         settings.workspaceBar.revealModifier = .off
         settings.workspaceBar.enabled = false
         XCTAssertEqual(controller.fullscreenLayoutFrame(for: monitor), monitor.visibleFrame)

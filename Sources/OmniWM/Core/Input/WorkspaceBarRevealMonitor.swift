@@ -14,6 +14,10 @@ final class WorkspaceBarRevealMonitor {
     private var localMonitor: Any?
     private var globalMonitor: Any?
 
+    var isMonitoring: Bool {
+        localMonitor != nil || globalMonitor != nil
+    }
+
     init(modifier: WorkspaceBarRevealModifier = .off, holdMilliseconds: Double = 200) {
         self.modifier = modifier
         self.holdMilliseconds = Self.normalizedHoldMilliseconds(holdMilliseconds)

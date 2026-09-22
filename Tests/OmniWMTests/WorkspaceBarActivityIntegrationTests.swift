@@ -31,6 +31,54 @@ final class WorkspaceBarActivityIntegrationTests: XCTestCase {
         XCTAssertEqual(fixture.controller.layoutFrames(for: fixture.monitor, scale: 1).workingFrame, before)
     }
 
+    func testActivityOnlyIgnoresPointerBeforeRevealAndAfterExpiration() throws {
+        let fixture = try Fixture()
+        defer { fixture.cleanup() }
+        XCTAssertFalse(fixture.settings.workspaceBar.revealOnHover)
+        fixture.pointer = fixture.panel.frame.center
+        fixture.controller.workspaceBarManager.refreshHover()
+        fixture.apply()
+        XCTAssertFalse(fixture.panel.isVisible)
+        fixture.switchWorkspace(fixture.second)
+        fixture.pointer = fixture.monitor.frame.center
+        fixture.apply()
+        XCTAssertTrue(fixture.panel.isVisible)
+        fixture.time = 1
+        fixture.apply()
+        XCTAssertFalse(fixture.panel.isVisible)
+        fixture.pointer = fixture.panel.frame.center
+        fixture.controller.workspaceBarManager.refreshHover()
+        fixture.apply()
+        XCTAssertFalse(fixture.panel.isVisible)
+    }
+
+    func testAlwaysVisibleIgnoresStoredTriggersAndReturningToTemporaryPreservesThem() throws {
+        let fixture = try Fixture()
+        defer { fixture.cleanup() }
+        fixture.settings.workspaceBar.revealModifier = .option
+        fixture.settings.workspaceBar.visibility = .alwaysVisible
+        fixture.apply()
+        XCTAssertTrue(fixture.panel.isVisible)
+        fixture.switchWorkspace(fixture.second)
+        XCTAssertNil(fixture.activity.state.nextDeadline)
+        fixture.controller.setWorkspaceBarRevealHeld(true)
+        fixture.controller.setWorkspaceBarRevealHeld(false)
+        fixture.apply()
+        XCTAssertTrue(fixture.panel.isVisible)
+        fixture.settings.workspaceBar.visibility = .temporary
+        fixture.apply()
+        XCTAssertFalse(fixture.panel.isVisible)
+        XCTAssertEqual(fixture.settings.workspaceBar.activityReveal, .workspaceAndColumn)
+        XCTAssertEqual(fixture.settings.workspaceBar.revealModifier, .option)
+        XCTAssertFalse(fixture.settings.workspaceBar.revealOnHover)
+        fixture.controller.setWorkspaceBarRevealHeld(true)
+        fixture.apply()
+        XCTAssertTrue(fixture.panel.isVisible)
+        fixture.controller.setWorkspaceBarRevealHeld(false)
+        fixture.apply()
+        XCTAssertFalse(fixture.panel.isVisible)
+    }
+
     func testColumnSelectionChangesRevealButSameColumnAndViewportAnimationDoNot() throws {
         let fixture = try Fixture()
         defer { fixture.cleanup() }
@@ -125,10 +173,10 @@ final class WorkspaceBarActivityIntegrationTests: XCTestCase {
         fixture.apply()
         fixture.switchWorkspace(fixture.first)
         XCTAssertNotNil(fixture.activity.state.nextDeadline)
-        fixture.settings.workspaceBar.autoHide = false
+        fixture.settings.workspaceBar.visibility = .alwaysVisible
         fixture.apply()
         XCTAssertNil(fixture.activity.state.nextDeadline)
-        fixture.settings.workspaceBar.autoHide = true
+        fixture.settings.workspaceBar.visibility = .temporary
         fixture.apply()
         fixture.switchWorkspace(fixture.second)
         fixture.settings.workspaceBar.hideInNativeFullscreen = true
@@ -218,7 +266,8 @@ final class WorkspaceBarActivityIntegrationTests: XCTestCase {
                 WorkspaceConfiguration(name: "1", layoutType: .niri),
                 WorkspaceConfiguration(name: "2", layoutType: .niri)
             ]
-            settings.workspaceBar.autoHide = true
+            settings.workspaceBar.visibility = .temporary
+            settings.workspaceBar.revealOnHover = false
             settings.workspaceBar.activityReveal = .workspaceAndColumn
             settings.workspaceBar.position = .bottom
             settings.workspaceBar.reserveLayoutSpace = true

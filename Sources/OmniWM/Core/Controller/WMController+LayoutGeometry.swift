@@ -142,8 +142,7 @@ extension WMController {
         return WorkspaceBarGeometry.resolve(
             monitor: monitor,
             resolved: resolved,
-            isVisible: settings.workspaceBar.revealModifier == .off
-                && isWorkspaceBarConfiguredVisible(on: monitor, resolved: resolved)
+            isVisible: isWorkspaceBarConfiguredVisible(on: monitor, resolved: resolved)
         )
     }
 
