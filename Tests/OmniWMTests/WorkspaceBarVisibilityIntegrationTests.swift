@@ -48,6 +48,7 @@ final class WorkspaceBarVisibilityIntegrationTests: XCTestCase {
             manager.refreshHover()
             fixture.apply()
             XCTAssertEqual(fixture.panel.isVisible, near)
+            XCTAssertEqual(manager.popupAttachment(on: fixture.monitor.id) != nil, near)
             XCTAssertEqual(fixture.panelCount, 1)
             XCTAssertEqual(fixture.controller.layoutFrames(for: fixture.monitor, scale: 1).workingFrame, before)
             XCTAssertEqual(fixture.controller.fullscreenLayoutFrame(for: fixture.monitor), fixture.monitor.visibleFrame)
@@ -57,7 +58,7 @@ final class WorkspaceBarVisibilityIntegrationTests: XCTestCase {
         manager.refreshHover()
         XCTAssertFalse(fixture.panel.isVisible)
         XCTAssertFalse(manager.isHoverRevealed(on: fixture.monitor.id))
-        XCTAssertNil(manager.primaryDisplayedFrame(on: fixture.monitor.id))
+        XCTAssertNil(manager.primaryBarFrame(on: fixture.monitor.id))
     }
 
     func testColumnSelectionChangesRevealButSameColumnAndViewportAnimationDoNot() throws {

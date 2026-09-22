@@ -476,18 +476,18 @@ extension WorkspaceBarManager {
         return WorkspaceBarGeometry.statsButtonAnchor(buttonFrame: frame)
     }
 
-    func primaryDisplayedFrame(on monitorId: Monitor.ID) -> CGRect? {
+    func primaryBarFrame(on monitorId: Monitor.ID) -> CGRect? {
         barsByMonitor[monitorId]?.primary.panel.frame
     }
 
     func popupAttachment(on monitorId: Monitor.ID, forStats: Bool = false) -> PopupAttachment? {
-        guard let instance = barsByMonitor[monitorId], let settings else { return nil }
-        let island = forStats && instance.secondary?.showsSystemStatsButton == true
-            ? instance.secondary : instance.primary
-        guard let island else { return nil }
+        guard let instance = barsByMonitor[monitorId], let settings,
+              let window = forStats ? instance.statsAnchorView?.window : instance.primary.panel,
+              window.isVisible
+        else { return nil }
         let edge = settings.workspaceBar.resolved(for: instance.monitor).position.popupEdge
         return PopupAttachment(
-            sourceFrame: island.panel.frame, edge: edge,
+            sourceFrame: window.frame, edge: edge,
             alignment: forStats ? statsAnchor(on: monitorId) : nil
         )
     }

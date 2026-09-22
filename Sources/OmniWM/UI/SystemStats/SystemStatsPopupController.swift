@@ -23,7 +23,7 @@ final class SystemStatsPopupController {
     var onVisibilityChanged: (() -> Void)?
 
     private(set) var isVisible = false
-    private(set) var panel: SystemStatsPopupPanel?
+    private var panel: SystemStatsPopupPanel?
     private let model = SystemStatsModel()
     private var refreshTask: Task<Void, Never>?
     private var eventMonitors: [Any] = []
@@ -57,10 +57,6 @@ final class SystemStatsPopupController {
         if anchoredMonitorId == monitorId {
             dismiss()
         }
-    }
-
-    nonisolated static func popupFrame(anchor: CGPoint, size: CGSize, screenVisibleFrame: CGRect) -> CGRect {
-        NonactivatingPanel.frame(anchor: anchor, size: size, screenVisibleFrame: screenVisibleFrame)
     }
 
     static func targetMonitor(

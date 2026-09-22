@@ -75,6 +75,7 @@ struct MouseInputState {
     }
 
     var capturedInteractionButton: MouseEventHandler.MouseButton?
+    var capturedOverviewButton: Int64?
     var resizeLayout: LayoutType?
     var moveLayout: LayoutType?
     var awaitsNativeTitleBarDragTarget = false
@@ -92,6 +93,7 @@ struct MouseInputState {
     var gestureStartY: CGFloat = 0.0
     var gestureLastAverageX: CGFloat = 0.0
     var gestureLastAverageY: CGFloat = 0.0
+    var gestureLastTimestamp: TimeInterval = 0
     var lockedGestureContext: LockedGestureContext?
     var activeGestureMode: TrackpadGestureMode?
     var gestureFingerCountMismatchSince: TimeInterval?

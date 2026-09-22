@@ -420,6 +420,7 @@ extension WMController {
         surfaceScope: SessionSurfaceInvalidationScope
     ) {
         workspaceBarActivityController.refresh()
+        layoutRefreshController.workspaceSwipe.handleInvalidation(workspaceId: workspaceId, domains: domains)
         switch surfaceScope {
         case .full:
             surfaceReconciler.noteWorldChanged()

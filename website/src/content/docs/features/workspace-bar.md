@@ -5,7 +5,7 @@ sidebar:
   order: 4
 ---
 
-The workspace bar is a floating island on each display, centered along its selected edge. It shows a chip per workspace — with the workspace's name, emoji-friendly — and the icons of the apps open there.
+The workspace bar is a floating island centered along the selected edge of each display. It shows a chip per workspace — with the workspace's name, emoji-friendly — and the icons of the apps open there.
 
 ## Clicking the bar
 
@@ -23,7 +23,7 @@ Optionally show a System Stats button that opens a CPU, memory, GPU, disk, and u
 
 Configure position, height, and appearance in Settings:
 
-- **Position** — overlap the menu bar, sit below it, or dock at **Bottom**, **Left**, or **Right** along the display's usable edge, avoiding a visible Dock. Available globally and per display.
+- **Position** — overlap the menu bar, sit below it, or dock at **Bottom**, **Left**, or **Right**. Available globally and per display.
 - **Notch handling** — `Off`, `Move Below Menu Bar`, or a split layout (`Split — Active Left` / `Split — Active Right`) that flows the bar around the notch with your chosen side for the active workspace.
 - **Visibility** — keep the bar always visible, or show it temporarily using independent pointer, activity, and modifier triggers. See [Visibility and reveal triggers](#visibility-and-reveal-triggers).
 - **Reveal on modifier hold** — reveal temporary bars while holding a chosen modifier, independently of pointer or activity reveal.
@@ -35,15 +35,22 @@ Configure position, height, and appearance in Settings:
 
 ### Bottom and side placement
 
-:::note[Unreleased]
-Edge placement and temporary visibility require a source build containing these changes.
-:::
+**Unreleased** — available when building from `main`.
 
-Set `position = "bottom"`, `"left"`, or `"right"` in `[workspaceBar]` or a per-display override. Placement follows the usable display edge, avoiding a visible Dock. X/Y offsets still apply; **Reserve layout space** reserves the configured thickness at that edge, regardless of offsets.
+```toml
+[workspaceBar]
+position = "bottom" # also "left" or "right"
+```
 
-Side bars keep labels and icons upright and scroll vertically when needed. `height` controls their width. Popups open inward from the displayed bar. Bottom and side positions ignore notch modes without changing the saved preference.
+Placement follows the usable display edge, avoiding a visible Dock. X/Y offsets still apply (positive X moves right; positive Y moves upward). **Reserve layout space** reserves the configured bar thickness at the selected edge, including layout-fullscreen windows; offsets do not change that reservation.
+
+Side bars stack upright labels and icons and scroll vertically when needed. **Bar Thickness** (`height` in TOML) controls their width. Stats, hidden-icon panels, and the fallback OmniWM menu open inward from the displayed bar or icon.
+
+Notch modes, including **Fill Left of Notch**, are ignored at bottom/left/right without changing your saved preference. Existing visibility settings still apply; temporary bars remain overlay-only.
 
 ### Visibility and reveal triggers
+
+**Unreleased** — requires a source build containing these changes.
 
 Choose **Visibility** globally or per display:
 
@@ -75,7 +82,7 @@ Existing modifier-only configurations load as temporary bars with pointer reveal
 
 ### Additional appearance controls
 
-- **Fill Left of Notch** — an additional notch mode that fills the menu-bar area left of the notch, covering application menus. Without a notch it uses the left half of the menu bar. When effective at a top position, this mode always hides in native fullscreen, regardless of **Hide in Native Fullscreen**. Bottom/left/right ignore the mode and follow the fullscreen visibility setting.
+- **Fill Left of Notch** — an additional notch mode that fills the menu-bar area left of the notch, covering application menus. Without a notch it uses the left half of the menu bar. When effective at a top position, this mode always hides in native fullscreen, regardless of **Hide in Native Fullscreen**.
 - **Inactive Icon Opacity** — adjust unfocused app icons from 0–100%; **Reset to System Default** clears the override.
 - **Transparent Background** — hide the bar material, tint, and border while keeping its contents interactive.
 - **Solid Black Background** — use an opaque black bar; **Transparent Background** takes precedence when both are enabled.

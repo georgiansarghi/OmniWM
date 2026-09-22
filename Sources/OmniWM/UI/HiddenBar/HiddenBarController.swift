@@ -26,7 +26,7 @@ final class HiddenBarController {
     }
 
     func isPanelVisible(on monitor: Monitor) -> Bool {
-        panel.isVisible && panel.panel?.screen?.displayId == monitor.displayId
+        panel.isVisible(on: monitor)
     }
 
     private let iconCache = HiddenBarIconCache()

@@ -416,6 +416,9 @@ OmniWM is a free, open-source, Developer ID-signed and Apple-notarized tiling wi
       <a href="https://github.com/MateuszJuszczyk" title="Mateusz Juszczyk">
         <img src="https://github.com/MateuszJuszczyk.png?size=96" width="72" alt="Mateusz Juszczyk">
       </a>
+      <a href="https://github.com/mattpetters" title="matt petters">
+        <img src="https://github.com/mattpetters.png?size=96" width="72" alt="matt petters">
+      </a>
       <a href="https://github.com/wicksipedia" title="Matt Wicks">
         <img src="https://github.com/wicksipedia.png?size=96" width="72" alt="Matt Wicks">
       </a>
@@ -911,9 +914,9 @@ Workspace-bar appearance controls are optional and also support per-monitor over
 - **Inactive Icon Opacity** adjusts non-focused app icons. Leaving it unset preserves the standard opacity for each kind of item; hidden-app icons retain their hidden-state appearance. Values are limited to 0–1, and nonfinite values are treated as unset.
 - Disable **Show Item Backgrounds** to remove the backgrounds behind workspace groups, floating windows, scratchpads, and the stats button.
 - Disable **Show Accent Highlights** to remove focused-item accent outlines and glows without changing focus behavior.
-- **Bottom / Left / Right placement** (unreleased) docks at the usable display edge. Side bars stack content vertically and scroll when needed; **Bar Thickness** controls their width. These positions ignore notch modes.
-- **Visibility** (unreleased) offers **Always Visible** or **Show Temporarily**, with independent pointer, activity, and modifier-hold triggers. Temporary bars never reserve layout space. See [Workspace Bar](website/src/content/docs/features/workspace-bar.md) for configuration examples.
-- **Fill Left of Notch** covers the menu-bar band from the display's left edge to the notch, or to the display midpoint when no notch is present. This deliberately covers application menus; choose another notch mode to access them again. When effective at a top position, this mode uses the menu-bar height, overrides the top position and offset/height controls, and does not reserve extra tiled layout space. It always hides on displays showing native fullscreen content. Bottom/Left/Right ignore notch modes and follow **Hide in Native Fullscreen**.
+- **Bottom / Left / Right placement** (**Unreleased**, available when building from `main`) docks at the usable display edge. Side bars stack upright content and scroll when needed; **Bar Thickness** controls their width. See [Workspace Bar](website/src/content/docs/features/workspace-bar.md) for details.
+- **Visibility** (**Unreleased**) offers **Always Visible** or **Show Temporarily**, with independent pointer, activity, and modifier-hold triggers. Temporary bars never reserve layout space. See [Workspace Bar](website/src/content/docs/features/workspace-bar.md#visibility-and-reveal-triggers) for configuration examples.
+- **Fill Left of Notch** covers the menu-bar band from the display's left edge to the notch, or to the display midpoint when no notch is present. This deliberately covers application menus; choose another notch mode to access them again. At top positions, this mode uses the menu-bar height, overrides position/offset/height controls, and does not reserve extra tiled layout space. It always hides on displays showing native fullscreen content. Bottom/Left/Right ignore notch modes and follow **Hide in Native Fullscreen**.
 
 Existing appearance stays unchanged until you opt in. For example, edit these keys inside the existing `[workspaceBar]` table (do not replace the complete configuration with this fragment):
 

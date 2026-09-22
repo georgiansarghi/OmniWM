@@ -23,12 +23,16 @@ final class HiddenBarPanelController {
     var onVisibilityChanged: (() -> Void)?
 
     private let model = HiddenBarPanelModel()
-    private(set) var panel: NonactivatingPanel?
+    private var panel: NonactivatingPanel?
     private let dismissalMonitor = PanelDismissalMonitor()
     private var lastPlacement: HiddenBarPanelPlacement?
     private weak var previousKeyWindow: NSWindow?
     private weak var previousFirstResponder: NSResponder?
     private(set) var isVisible = false
+
+    func isVisible(on monitor: Monitor) -> Bool {
+        isVisible && panel?.screen?.displayId == monitor.displayId
+    }
 
     func toggle(placement: HiddenBarPanelPlacement, items: [HiddenBarGlyph]) {
         if isVisible {
@@ -109,10 +113,6 @@ final class HiddenBarPanelController {
             width: min(maxRowWidth, maxContentWidth) + padding * 2,
             height: rows * rowHeight + (rows - 1) * spacing + padding * 2
         )
-    }
-
-    nonisolated static func panelFrame(anchor: CGPoint, size: CGSize, screenVisibleFrame: CGRect) -> CGRect {
-        NonactivatingPanel.frame(anchor: anchor, size: size, screenVisibleFrame: screenVisibleFrame)
     }
 
     private func show(placement: HiddenBarPanelPlacement, items: [HiddenBarGlyph]) {

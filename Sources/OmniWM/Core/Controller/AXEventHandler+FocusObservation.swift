@@ -29,6 +29,7 @@ extension AXEventHandler {
         source: ActivationEventSource,
         origin: ActivationCallOrigin
     ) -> Bool {
+        guard acceptsActivationSource(pid: pid, source: source) else { return false }
         if origin == .external, source != .focusedWindowChanged {
             latestNativeActivationPID = pid
         }
@@ -40,13 +41,19 @@ extension AXEventHandler {
     }
 
     func acceptsActivationFacts(_ facts: ActivationFacts, observedToken: WindowToken?) -> Bool {
-        !suppressBackgroundFocusObservationIfNeeded(
+        guard acceptsActivationSource(pid: facts.pid, source: facts.source) else { return false }
+        return !suppressBackgroundFocusObservationIfNeeded(
             pid: facts.pid,
             source: facts.source,
             origin: facts.origin,
             observedToken: observedToken,
             isSystemModalSurface: facts.focusedWindow?.isSystemModalSurface == true
         )
+    }
+
+    private func acceptsActivationSource(pid: pid_t, source: ActivationEventSource) -> Bool {
+        guard pid > 0 else { return false }
+        return source != .workspaceDidUnhideApplication || frontmostApplicationPIDProvider() == pid
     }
 
     private func suppressBackgroundFocusObservationIfNeeded(

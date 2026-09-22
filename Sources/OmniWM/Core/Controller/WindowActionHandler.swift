@@ -30,6 +30,9 @@ final class WindowActionHandler {
         oc.onActivateWindow = { [weak self] handle, workspaceId in
             self?.activateWindowFromOverview(handle: handle, workspaceId: workspaceId)
         }
+        oc.onActivateWorkspace = { [weak self] workspaceId in
+            self?.controller?.workspaceNavigationHandler.activateOverviewWorkspace(workspaceId) ?? false
+        }
         oc.onCloseWindow = { [weak self] handle in
             self?.closeWindow(handle: handle) ?? false
         }
@@ -83,10 +86,13 @@ final class WindowActionHandler {
     }
 
     func toggleOverview() {
+        controller?.layoutRefreshController.workspaceSwipe.cancel(reason: "overview")
         overviewController.toggle()
     }
 
     func openOverview() {
+        controller?.layoutRefreshController.workspaceSwipe.cancel(reason: "overview")
+        overviewController.input.beginGestureScrollSuppression()
         overviewController.open()
     }
 
@@ -107,11 +113,16 @@ final class WindowActionHandler {
     }
 
     func beginOverviewGesture() -> Bool {
-        overviewController.beginInteractiveTransition()
+        controller?.layoutRefreshController.workspaceSwipe.cancel(reason: "overview")
+        return overviewController.beginInteractiveTransition()
     }
 
-    func updateOverviewGesture(cumulativeUnits: Double, timestamp: TimeInterval) {
-        overviewControllerStorage?.updateInteractiveTransition(cumulativeUnits: cumulativeUnits, timestamp: timestamp)
+    func updateOverviewGesture(
+        cumulativeUnits: Double, timestamp: TimeInterval, recognitionMovement: SwipeEvent? = nil
+    ) {
+        overviewControllerStorage?.updateInteractiveTransition(
+            cumulativeUnits: cumulativeUnits, timestamp: timestamp, recognitionMovement: recognitionMovement
+        )
     }
 
     func endOverviewGesture(timestamp: TimeInterval?) {
@@ -151,8 +162,15 @@ final class WindowActionHandler {
 
     private func activateWindowFromOverview(handle: WindowHandle, workspaceId: WorkspaceDescriptor.ID) {
         guard let controller else { return }
-        guard controller.workspaceManager.entry(for: handle) != nil else { return }
-        navigateToWindowInternal(token: handle.id, workspaceId: workspaceId)
+        guard let entry = controller.workspaceManager.entry(for: handle) else { return }
+        if entry.layoutReason == .nativeFullscreen {
+            guard let record = controller.workspaceManager.nativeFullscreenRecord(for: entry.token) else { return }
+            controller.activateNativeFullscreenPlaceholder(record.originalToken)
+            return
+        }
+        navigateToWindowInternal(
+            token: handle.id, workspaceId: workspaceId, affectedWorkspaces: [workspaceId]
+        )
     }
 
     func closeWindow(handle: WindowHandle) -> Bool {

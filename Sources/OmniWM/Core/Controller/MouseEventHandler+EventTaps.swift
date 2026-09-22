@@ -13,6 +13,9 @@ extension MouseEventHandler {
             (1 << CGEventType.rightMouseDown.rawValue) |
             (1 << CGEventType.rightMouseDragged.rawValue) |
             (1 << CGEventType.rightMouseUp.rawValue) |
+            (1 << CGEventType.otherMouseDown.rawValue) |
+            (1 << CGEventType.otherMouseDragged.rawValue) |
+            (1 << CGEventType.otherMouseUp.rawValue) |
             (1 << CGEventType.scrollWheel.rawValue)
         if !annotatedMoveTapInstalled {
             mask |= 1 << CGEventType.mouseMoved.rawValue
@@ -176,6 +179,8 @@ extension MouseEventHandler {
         let screenLocation = ScreenCoordinateSpace.toAppKit(point: location)
         let modifiers = event.flags
         let windowIdUnderPointer = type == .mouseMoved ? eventWindowIdUnderPointer(event) : nil
+        let buttonNumber = type == .otherMouseDown || type == .otherMouseDragged || type == .otherMouseUp
+            ? event.getIntegerValueField(.mouseEventButtonNumber) : nil
         let scrollPayload = type == .scrollWheel ? Self.scrollPayload(
             event,
             at: screenLocation,
@@ -184,6 +189,9 @@ extension MouseEventHandler {
         return MainActor.assumeIsolated {
             guard let handler = MouseEventHandler._instance else { return false }
             if handler.isCapturingPerformance { handler.recordCGEvent(type) }
+            if let buttonNumber {
+                return handler.receiveTapOverviewMouseButton(type: type, button: buttonNumber)
+            }
             return handler.dispatchTapEvent(
                 type: type, location: screenLocation, modifiers: modifiers,
                 windowIdUnderPointer: windowIdUnderPointer, scrollPayload: scrollPayload
@@ -193,7 +201,8 @@ extension MouseEventHandler {
 
     private func dispatchTapEvent(
         type: CGEventType, location: CGPoint, modifiers: CGEventFlags,
-        windowIdUnderPointer: Int?, scrollPayload: MouseScrollIntake?
+        windowIdUnderPointer: Int?,
+        scrollPayload: (payload: MouseScrollIntake, traceMetadata: TrackpadScrollTrace.ScrollMetadata?)?
     ) -> Bool {
         var suppressEvent = false
         switch type {
@@ -225,27 +234,28 @@ extension MouseEventHandler {
             receiveTapMouseUp(at: location, button: .right)
         case .scrollWheel:
             guard let scrollPayload else { return false }
-            suppressEvent = receiveTapScrollWheel(scrollPayload)
+            suppressEvent = receiveTapScrollWheel(scrollPayload.payload, traceMetadata: scrollPayload.traceMetadata)
         default:
             break
         }
         return suppressEvent
     }
 
-    private nonisolated static func scrollPayload(
+    nonisolated static func scrollPayload(
         _ event: CGEvent, at screenLocation: CGPoint, modifiersRawValue: UInt64
-    ) -> MouseScrollIntake {
+    ) -> (payload: MouseScrollIntake, traceMetadata: TrackpadScrollTrace.ScrollMetadata?) {
+        let observedAt = TrackpadScrollTrace.shared.isActive ? DispatchTime.now().uptimeNanoseconds : nil
         let momentumPhase = UInt32(event.getIntegerValueField(.scrollWheelEventMomentumPhase))
         let phase = UInt32(event.getIntegerValueField(.scrollWheelEventScrollPhase))
         let isContinuous = event.getIntegerValueField(.scrollWheelEventIsContinuous) != 0
-        var senderId: UInt64?
-        if momentumPhase == 0, phase == 0, isContinuous,
-           let hidEvent = CGEventCopyIOHIDEvent(event)?.takeRetainedValue()
-        {
-            let sender = IOHIDEventGetSenderID(hidEvent)
-            if sender != 0 { senderId = sender }
+        let needsSender = momentumPhase == 0 && phase == 0 && isContinuous
+        let sender = needsSender || observedAt != nil ? scrollSender(event) : (nil, .notRequested)
+        let traceMetadata = observedAt.map {
+            TrackpadScrollTrace.ScrollMetadata(
+                eventTimestamp: event.timestamp, observedAt: $0, senderId: sender.0, senderLookup: sender.1
+            )
         }
-        return MouseScrollIntake(
+        let payload = MouseScrollIntake(
             location: screenLocation,
             deltaX: resolvedWheelAxisDelta(
                 pointDelta: CGFloat(event.getDoubleValueField(.scrollWheelEventPointDeltaAxis2)),
@@ -259,8 +269,17 @@ extension MouseEventHandler {
             phase: phase,
             modifiersRawValue: modifiersRawValue,
             isContinuous: isContinuous,
-            senderId: senderId
+            senderId: needsSender ? sender.0 : nil
         )
+        return (payload, traceMetadata)
+    }
+
+    private nonisolated static func scrollSender(
+        _ event: CGEvent
+    ) -> (UInt64?, TrackpadScrollTrace.SenderLookup) {
+        guard let hidEvent = CGEventCopyIOHIDEvent(event)?.takeRetainedValue() else { return (nil, .unavailable) }
+        let sender = IOHIDEventGetSenderID(hidEvent)
+        return sender == 0 ? (nil, .zero) : (sender, .identified)
     }
 
     nonisolated static func eventWindowIdUnderPointer(_ event: CGEvent) -> Int? {
