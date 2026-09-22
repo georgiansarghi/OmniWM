@@ -179,13 +179,10 @@ extension WMController {
 
     func isWorkspaceBarConfiguredVisible(on monitor: Monitor, resolved: ResolvedBarSettings) -> Bool {
         guard isWorkspaceBarEnabled(on: monitor, resolved: resolved) else { return false }
-        if resolved.visibility == .temporary {
-            return isWorkspaceBarRevealHeld || workspaceBarManager.isHoverRevealed(on: monitor.id)
-                ||
-                (resolved.activityReveal != .off && workspaceBarActivityController.state.revealed
-                    .contains(monitor.id))
-        }
-        return true
+        return resolved.visibility == .alwaysVisible
+            || isWorkspaceBarRevealHeld
+            || workspaceBarManager.isHoverRevealed(on: monitor.id)
+            || (resolved.activityReveal != .off && workspaceBarActivityController.state.revealed.contains(monitor.id))
     }
 
     func isWorkspaceBarVisible(on monitor: Monitor, resolved: ResolvedBarSettings? = nil) -> Bool {

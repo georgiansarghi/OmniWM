@@ -25,15 +25,23 @@ final class WorkspaceBarActivitySettingsTests: XCTestCase {
         for mode in WorkspaceBarActivityReveal.allCases {
             var export = SettingsExport.defaults()
             export.workspaceBar.visibility = .temporary
+            export.workspaceBar.revealOnHover = false
             export.workspaceBar.activityReveal = mode
             export.workspaceBar.activityRevealSeconds = 1.5
             export.monitorBarSettings = [
-                MonitorBarSettings(monitorName: "Off", activityReveal: .off, activityRevealSeconds: 2),
+                MonitorBarSettings(
+                    monitorName: "Off", visibility: .alwaysVisible, revealOnHover: true,
+                    activityReveal: .off, activityRevealSeconds: 2
+                ),
                 MonitorBarSettings(monitorName: "Inherited")
             ]
             let data = try SettingsTOMLCodec.encode(export)
             XCTAssertTrue(SettingsTOMLCodec.unknownKeyPaths(in: data).isEmpty)
             let decoded = try SettingsTOMLCodec.decode(data)
+            XCTAssertEqual(decoded.workspaceBar.visibility, .temporary)
+            XCTAssertFalse(decoded.workspaceBar.revealOnHover)
+            XCTAssertEqual(decoded.monitorBarSettings.map(\.visibility), [.alwaysVisible, nil])
+            XCTAssertEqual(decoded.monitorBarSettings.map(\.revealOnHover), [true, nil])
             XCTAssertEqual(decoded.workspaceBar.activityReveal, mode)
             XCTAssertEqual(decoded.workspaceBar.activityRevealSeconds, 1.5)
             XCTAssertEqual(decoded.monitorBarSettings.map(\.activityReveal), [.off, nil])
@@ -42,7 +50,7 @@ final class WorkspaceBarActivitySettingsTests: XCTestCase {
     }
 
     @MainActor
-    func testOverrideInheritanceAndAutoHideTogglePreservePreferences() {
+    func testOverrideInheritanceAndVisibilityTogglePreservePreferences() {
         let settings = WorkspaceBarSettings()
         let monitor = Monitor(
             id: .init(displayId: 1), displayId: 1,
@@ -52,10 +60,17 @@ final class WorkspaceBarActivitySettingsTests: XCTestCase {
         settings.visibility = .temporary
         settings.activityReveal = .workspaceAndColumn
         settings.activityRevealSeconds = 1.5
-        settings.update(MonitorBarSettings(monitorName: "Test", activityReveal: .off), for: monitor)
+        settings.revealOnHover = false
+        settings.update(MonitorBarSettings(
+            monitorName: "Test", visibility: .alwaysVisible, revealOnHover: true, activityReveal: .off
+        ), for: monitor)
+        XCTAssertEqual(settings.resolved(for: monitor).visibility, .alwaysVisible)
+        XCTAssertTrue(settings.resolved(for: monitor).revealOnHover)
         XCTAssertEqual(settings.resolved(for: monitor).activityReveal, .off)
         XCTAssertEqual(settings.resolved(for: monitor).activityRevealSeconds, 1.5)
         settings.remove(for: monitor)
+        XCTAssertEqual(settings.resolved(for: monitor).visibility, .temporary)
+        XCTAssertFalse(settings.resolved(for: monitor).revealOnHover)
         settings.visibility = .alwaysVisible
         XCTAssertEqual(settings.resolved(for: monitor).activityReveal, .workspaceAndColumn)
         settings.visibility = .temporary

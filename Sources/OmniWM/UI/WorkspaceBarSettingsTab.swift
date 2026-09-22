@@ -88,8 +88,7 @@ private struct GlobalBarSettingsSection: View {
         }
         .disabled(settings.workspaceBar.visibility != .temporary)
         .help(
-            "Requires Show Temporarily, not pointer reveal. Actual workspace, Niri column, or focus changes show the bar. "
-                + "Repeated changes restart the duration; hover delays remain zero."
+            "In Show Temporarily mode, each qualifying change restarts the duration, independently of pointer reveal."
         )
     }
 
@@ -147,8 +146,9 @@ private struct GlobalBarSettingsSection: View {
                     .onChange(of: settings.workspaceBar.revealOnHover) { _, _ in
                         controller.updateWorkspaceBarSettings()
                     }
-                    .help("Reveal at the bar's edge with zero delay. When off, the mouse cannot summon it, "
-                        + "but hovering an already-visible bar or using its popups keeps it open.")
+                    .help(
+                        "Reveal immediately near the bar. When off, the pointer can only keep an already-visible bar open."
+                    )
 
                 activitySettings
 

@@ -54,13 +54,6 @@ final class WorkspaceBarHoverStateTests: XCTestCase {
         XCTAssertTrue(state.revealed.isEmpty)
     }
 
-    func testOpeningPopupWhileLeavingBarKeepsItRevealed() {
-        var state = WorkspaceBarHoverState()
-        state.update(targets: [target()], pointer: near)
-        state.update(targets: [target(visible: true, pinned: true)], pointer: away)
-        XCTAssertEqual(state.revealed, [monitor.id])
-    }
-
     func testRemovingDisplayOrDisablingEligibilityClearsRevealImmediately() {
         var state = WorkspaceBarHoverState()
         state.update(targets: [target()], pointer: near)

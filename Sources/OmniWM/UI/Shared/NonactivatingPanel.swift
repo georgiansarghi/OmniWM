@@ -13,10 +13,8 @@ final class NonactivatingPanel: NSPanel {
         false
     }
 
-    nonisolated static func frame(
-        anchor: CGPoint, size: CGSize, screenVisibleFrame: CGRect, edge: PopupAttachment.Edge = .below
-    ) -> CGRect {
-        PopupAttachment(anchor: anchor, edge: edge).frame(size: size, visibleFrame: screenVisibleFrame)
+    nonisolated static func frame(anchor: CGPoint, size: CGSize, screenVisibleFrame: CGRect) -> CGRect {
+        PopupAttachment(anchor: anchor).frame(size: size, visibleFrame: screenVisibleFrame)
     }
 }
 

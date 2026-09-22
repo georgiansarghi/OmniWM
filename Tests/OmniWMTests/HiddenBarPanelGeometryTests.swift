@@ -5,22 +5,6 @@
 import XCTest
 
 final class HiddenBarPanelGeometryTests: XCTestCase {
-    @MainActor
-    func testVisibilityCallbacksObserveActualPanelVisibility() {
-        let controller = HiddenBarPanelController()
-        defer { controller.dismiss() }
-        var visibility: [Bool] = []
-        controller.onVisibilityChanged = {
-            visibility.append(controller.isVisible && controller.panel?.isVisible == true)
-        }
-        controller.toggle(placement: HiddenBarPanelPlacement(
-            attachment: PopupAttachment(anchor: CGPoint(x: 400, y: 800)), visibleFrame: screen
-        ), items: [])
-        controller.dismiss()
-        XCTAssertEqual(visibility, [true, false])
-        controller.onVisibilityChanged = nil
-    }
-
     private let screen = CGRect(x: 0, y: 0, width: 1440, height: 900)
 
     func testCentersUnderAnchor() {

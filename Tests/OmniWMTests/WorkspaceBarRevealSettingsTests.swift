@@ -33,6 +33,33 @@ final class WorkspaceBarRevealSettingsTests: XCTestCase {
         let decoded = try SettingsTOMLCodec.decode(data)
         XCTAssertEqual(decoded.workspaceBar.revealModifier, .controlOptionCommand)
         XCTAssertEqual(decoded.workspaceBar.revealHoldMilliseconds, 350)
+        XCTAssertEqual(decoded.workspaceBar.visibility, .alwaysVisible)
+        XCTAssertTrue(decoded.workspaceBar.revealOnHover)
+    }
+
+    func testLegacyModifierSettingsKeepTheirVisibilityAfterLoadAndSave() throws {
+        for modifier in [WorkspaceBarRevealModifier.off, .option] {
+            var export = SettingsExport.defaults()
+            export.workspaceBar.revealModifier = modifier
+            export.monitorBarSettings = [MonitorBarSettings(monitorName: "Inherited")]
+            let text = String(decoding: try SettingsTOMLCodec.encode(export), as: UTF8.self)
+                .replacingOccurrences(of: "visibility = \"alwaysVisible\"\n", with: "")
+                .replacingOccurrences(of: "revealOnHover = true\n", with: "")
+            for schema in [2, 3] {
+                let legacy = schema == 3 ? text : "monitorRoutingOverrides = []\n" + text
+                    .replacingOccurrences(of: "schemaVersion = 3", with: "schemaVersion = 2")
+                    .replacingOccurrences(of: "arrangements = []\n", with: "")
+                let data = Data(legacy.utf8)
+                let decoded = try SettingsTOMLCodec.decode(data)
+                XCTAssertEqual(decoded.workspaceBar.visibility, modifier == .off ? .alwaysVisible : .temporary)
+                XCTAssertEqual(decoded.workspaceBar.revealOnHover, modifier == .off)
+                XCTAssertEqual(decoded.workspaceBar.activityReveal, .off)
+                XCTAssertNil(decoded.monitorBarSettings[0].visibility)
+                XCTAssertNil(decoded.monitorBarSettings[0].revealOnHover)
+                let saved = try SettingsTOMLCodec.encode(decoded, preservingUnknownKeysFrom: data)
+                XCTAssertEqual(try SettingsTOMLCodec.decode(saved).workspaceBar, decoded.workspaceBar)
+            }
+        }
     }
 
     @MainActor

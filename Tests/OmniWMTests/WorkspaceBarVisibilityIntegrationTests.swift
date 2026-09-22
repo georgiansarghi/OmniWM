@@ -6,12 +6,17 @@ import AppKit
 import XCTest
 
 @MainActor
-final class WorkspaceBarActivityIntegrationTests: XCTestCase {
+final class WorkspaceBarVisibilityIntegrationTests: XCTestCase {
     func testWorkspaceChangeShowsReusedPanelWithoutChangingLayoutAndExpires() throws {
         let fixture = try Fixture()
         defer { fixture.cleanup() }
         let before = fixture.controller.layoutFrames(for: fixture.monitor, scale: 1).workingFrame
         XCTAssertFalse(fixture.panel.isVisible)
+        fixture.pointer = fixture.panel.frame.center
+        fixture.controller.workspaceBarManager.refreshHover()
+        fixture.apply()
+        XCTAssertFalse(fixture.panel.isVisible)
+        fixture.pointer = fixture.monitor.frame.center
         fixture.switchWorkspace(fixture.second)
         XCTAssertTrue(fixture.activity.state.revealed.contains(fixture.monitor.id))
         fixture.apply()
@@ -31,52 +36,28 @@ final class WorkspaceBarActivityIntegrationTests: XCTestCase {
         XCTAssertEqual(fixture.controller.layoutFrames(for: fixture.monitor, scale: 1).workingFrame, before)
     }
 
-    func testActivityOnlyIgnoresPointerBeforeRevealAndAfterExpiration() throws {
+    func testHoverReusesPanelWithoutResizingWindowsAndCleanupStopsReveal() throws {
         let fixture = try Fixture()
         defer { fixture.cleanup() }
-        XCTAssertFalse(fixture.settings.workspaceBar.revealOnHover)
-        fixture.pointer = fixture.panel.frame.center
-        fixture.controller.workspaceBarManager.refreshHover()
+        fixture.settings.workspaceBar.revealOnHover = true
         fixture.apply()
+        let manager = fixture.controller.workspaceBarManager
+        let before = fixture.controller.layoutFrames(for: fixture.monitor, scale: 1).workingFrame
+        for near in [true, false, true] {
+            fixture.pointer = near ? fixture.panel.frame.center : fixture.monitor.frame.center
+            manager.refreshHover()
+            fixture.apply()
+            XCTAssertEqual(fixture.panel.isVisible, near)
+            XCTAssertEqual(fixture.panelCount, 1)
+            XCTAssertEqual(fixture.controller.layoutFrames(for: fixture.monitor, scale: 1).workingFrame, before)
+            XCTAssertEqual(fixture.controller.fullscreenLayoutFrame(for: fixture.monitor), fixture.monitor.visibleFrame)
+        }
+        fixture.controller.hasStartedServices = false
+        manager.cleanup()
+        manager.refreshHover()
         XCTAssertFalse(fixture.panel.isVisible)
-        fixture.switchWorkspace(fixture.second)
-        fixture.pointer = fixture.monitor.frame.center
-        fixture.apply()
-        XCTAssertTrue(fixture.panel.isVisible)
-        fixture.time = 1
-        fixture.apply()
-        XCTAssertFalse(fixture.panel.isVisible)
-        fixture.pointer = fixture.panel.frame.center
-        fixture.controller.workspaceBarManager.refreshHover()
-        fixture.apply()
-        XCTAssertFalse(fixture.panel.isVisible)
-    }
-
-    func testAlwaysVisibleIgnoresStoredTriggersAndReturningToTemporaryPreservesThem() throws {
-        let fixture = try Fixture()
-        defer { fixture.cleanup() }
-        fixture.settings.workspaceBar.revealModifier = .option
-        fixture.settings.workspaceBar.visibility = .alwaysVisible
-        fixture.apply()
-        XCTAssertTrue(fixture.panel.isVisible)
-        fixture.switchWorkspace(fixture.second)
-        XCTAssertNil(fixture.activity.state.nextDeadline)
-        fixture.controller.setWorkspaceBarRevealHeld(true)
-        fixture.controller.setWorkspaceBarRevealHeld(false)
-        fixture.apply()
-        XCTAssertTrue(fixture.panel.isVisible)
-        fixture.settings.workspaceBar.visibility = .temporary
-        fixture.apply()
-        XCTAssertFalse(fixture.panel.isVisible)
-        XCTAssertEqual(fixture.settings.workspaceBar.activityReveal, .workspaceAndColumn)
-        XCTAssertEqual(fixture.settings.workspaceBar.revealModifier, .option)
-        XCTAssertFalse(fixture.settings.workspaceBar.revealOnHover)
-        fixture.controller.setWorkspaceBarRevealHeld(true)
-        fixture.apply()
-        XCTAssertTrue(fixture.panel.isVisible)
-        fixture.controller.setWorkspaceBarRevealHeld(false)
-        fixture.apply()
-        XCTAssertFalse(fixture.panel.isVisible)
+        XCTAssertFalse(manager.isHoverRevealed(on: fixture.monitor.id))
+        XCTAssertNil(manager.primaryDisplayedFrame(on: fixture.monitor.id))
     }
 
     func testColumnSelectionChangesRevealButSameColumnAndViewportAnimationDoNot() throws {
@@ -143,25 +124,7 @@ final class WorkspaceBarActivityIntegrationTests: XCTestCase {
         XCTAssertFalse(fixture.panel.isVisible)
     }
 
-    func testPopupOpenedDuringActivityRemainsOpenAfterExpiration() throws {
-        let fixture = try Fixture()
-        defer { fixture.cleanup() }
-        fixture.switchWorkspace(fixture.second)
-        fixture.apply()
-        fixture.controller.systemStatsPopupController.toggle(
-            attachment: PopupAttachment(sourceFrame: fixture.panel.frame, edge: .above),
-            monitorId: fixture.monitor.id, screenVisibleFrame: fixture.monitor.visibleFrame
-        )
-        fixture.time = 1
-        fixture.apply()
-        XCTAssertNil(fixture.activity.state.nextDeadline)
-        XCTAssertTrue(fixture.panel.isVisible)
-        fixture.controller.systemStatsPopupController.dismiss()
-        fixture.apply()
-        XCTAssertFalse(fixture.panel.isVisible)
-    }
-
-    func testManualHideAutoHideOffFullscreenAndCleanupCancelActivity() throws {
+    func testManualHideAlwaysVisibleFullscreenAndCleanupCancelActivity() throws {
         let fixture = try Fixture()
         defer { fixture.cleanup() }
         fixture.switchWorkspace(fixture.second)
@@ -212,25 +175,28 @@ final class WorkspaceBarActivityIntegrationTests: XCTestCase {
         XCTAssertFalse(fixture.panel.isVisible)
     }
 
-    func testExtendingDeadlineCancelsOldTimerAndStoppingClearsTheNewOne() async throws {
+    func testWindowListSheetKeepsBarOpenAfterActivityExpires() async throws {
         let fixture = try Fixture()
         defer { fixture.cleanup() }
-        fixture.activity.now = { ProcessInfo.processInfo.systemUptime }
-        fixture.settings.workspaceBar.activityRevealSeconds = 0.3
-        fixture.apply()
         fixture.switchWorkspace(fixture.second)
-        let originalDeadline = try XCTUnwrap(fixture.activity.state.nextDeadline)
-        try await Task.sleep(for: .milliseconds(150))
-        fixture.switchWorkspace(fixture.first)
-        let extendedDeadline = try XCTUnwrap(fixture.activity.state.nextDeadline)
-        XCTAssertGreaterThan(extendedDeadline, originalDeadline)
-        // Cross the old deadline while remaining before the replacement deadline.
-        try await Task.sleep(for: .seconds(max(0, originalDeadline - fixture.activity.now()) + 0.02))
-        XCTAssertEqual(fixture.activity.state.nextDeadline, extendedDeadline)
-        fixture.controller.hasStartedServices = false
-        fixture.controller.workspaceBarManager.cleanup()
-        try await Task.sleep(for: .milliseconds(350))
-        XCTAssertNil(fixture.activity.state.nextDeadline)
+        fixture.apply()
+        let sheet = NSPanel(
+            contentRect: CGRect(x: 0, y: 0, width: 300, height: 200),
+            styleMask: [.titled], backing: .buffered, defer: false
+        )
+        defer {
+            if fixture.panel.attachedSheet === sheet { fixture.panel.endSheet(sheet) }
+            sheet.orderOut(nil)
+        }
+        fixture.panel.beginSheet(sheet, completionHandler: nil)
+        fixture.time = 1
+        fixture.apply()
+        XCTAssertTrue(fixture.panel.isVisible)
+        fixture.panel.endSheet(sheet)
+        sheet.orderOut(nil)
+        for _ in 0 ..< 100 where fixture.panel.isVisible {
+            try await Task.sleep(for: .milliseconds(20))
+        }
         XCTAssertFalse(fixture.panel.isVisible)
     }
 

@@ -17,12 +17,11 @@ enum SettingsTOMLCodec {
 
         let decoder = TOMLDecoder()
         let newCanonicalTree = try decoder.decode([String: TOMLNode].self, from: canonicalData)
-        var oldRawTree: [String: TOMLNode]
+        let oldRawTree: [String: TOMLNode]
         let oldExport: SettingsExport
         do {
             oldRawTree = try decoder.decode([String: TOMLNode].self, from: previous)
             oldExport = try decode(previous)
-            try WorkspaceBarVisibilityMigration.normalize(&oldRawTree)
         } catch let error as SettingsTOMLCodecError {
             if case .unsupportedSchemaVersion = error {
                 throw error
@@ -78,15 +77,11 @@ enum SettingsTOMLCodec {
         }
 
         if version == currentSchemaVersion {
-            let original = raw
-            try WorkspaceBarVisibilityMigration.normalize(&raw)
-            let normalizedData = raw == original ? data : try TOMLEncoder().encode(raw)
-            let canonical = try decoder.decode(CanonicalTOMLConfig.self, from: normalizedData)
+            let canonical = try decoder.decode(CanonicalTOMLConfig.self, from: data)
             return SettingsTOMLDecodeResult(export: canonical.toSettingsExport(), migration: nil, migratedData: nil)
         }
 
         let report = try SettingsTOMLMigration.migrate(&raw, from: version)
-        try WorkspaceBarVisibilityMigration.normalize(&raw)
         let encoder = TOMLEncoder()
         encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
         let migratedData = try encoder.encode(raw)
@@ -102,8 +97,7 @@ enum SettingsTOMLCodec {
         guard !data.isEmpty else { return [] }
         do {
             let decoder = TOMLDecoder()
-            var raw = try decoder.decode([String: TOMLNode].self, from: data)
-            try WorkspaceBarVisibilityMigration.normalize(&raw)
+            let raw = try decoder.decode([String: TOMLNode].self, from: data)
             let known = try decoder.decode([String: TOMLNode].self, from: encodeCanonical(decode(data)))
             return TOMLNode.unknownKeyPaths(raw: raw, known: known, prefix: "").sorted()
         } catch {

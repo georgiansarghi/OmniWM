@@ -43,13 +43,13 @@ struct MonitorBarSettingsSection: View {
         }
         .disabled(resolved.visibility != .temporary)
         .help(
-            "Requires Show Temporarily, not pointer reveal. Repeated workspace, Niri column, or focus changes restart the duration; "
-                + "hover delays remain zero."
+            "In Show Temporarily mode, each qualifying change restarts the duration, independently of pointer reveal."
         )
     }
 
     var body: some View {
         let ms = monitorSettings
+        let resolved = settings.workspaceBar.resolved(for: monitor)
 
         Section("Workspace Bar") {
             OverridableToggle(
@@ -119,18 +119,17 @@ struct MonitorBarSettingsSection: View {
                 onChange: { newValue in updateSetting { $0.revealOnHover = newValue } },
                 onReset: { updateSetting { $0.revealOnHover = nil } }
             )
-            .disabled(settings.workspaceBar.resolved(for: monitor).visibility != .temporary)
+            .disabled(resolved.visibility != .temporary)
             .help(
                 "When off, the mouse cannot summon the bar, but it can keep an already-visible bar open for interaction."
             )
 
             activitySettings
 
-            if settings.workspaceBar.resolved(for: monitor).visibility == .temporary {
+            if resolved.visibility == .temporary {
                 Text("Modifier hold: \(settings.workspaceBar.revealModifier.displayName) (configured globally)")
                     .font(.caption).foregroundStyle(.secondary)
-                if !settings.workspaceBar.resolved(for: monitor).revealOnHover,
-                   settings.workspaceBar.resolved(for: monitor).activityReveal == .off,
+                if !resolved.revealOnHover, resolved.activityReveal == .off,
                    settings.workspaceBar.revealModifier == .off
                 {
                     Text("No reveal triggers selected. Choose a trigger to show the bar.")

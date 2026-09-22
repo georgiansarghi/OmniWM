@@ -4,6 +4,104 @@
 import AppKit
 import SwiftUI
 
+enum WorkspaceBarWindowLevel: String, CaseIterable, Codable, Identifiable {
+    case normal
+    case floating
+    case status
+    case popup
+    case screensaver
+
+    var id: String {
+        rawValue
+    }
+
+    var displayName: String {
+        switch self {
+        case .normal: "Normal"
+        case .floating: "Floating"
+        case .status: "Status Bar"
+        case .popup: "Popup"
+        case .screensaver: "Screen Saver"
+        }
+    }
+
+    var nsWindowLevel: NSWindow.Level {
+        switch self {
+        case .normal: .normal
+        case .floating: .floating
+        case .status: .statusBar
+        case .popup: .popUpMenu
+        case .screensaver: .screenSaver
+        }
+    }
+}
+
+enum WorkspaceBarPosition: String, CaseIterable, Codable, Identifiable {
+    case overlappingMenuBar
+    case belowMenuBar
+    case bottom
+    case left
+    case right
+
+    var isVertical: Bool {
+        self == .left || self == .right
+    }
+
+    var usesNotch: Bool {
+        self == .overlappingMenuBar || self == .belowMenuBar
+    }
+
+    var popupEdge: PopupAttachment.Edge {
+        switch self {
+        case .overlappingMenuBar,
+             .belowMenuBar: .below
+        case .bottom: .above
+        case .left: .right
+        case .right: .left
+        }
+    }
+
+    var id: String {
+        rawValue
+    }
+
+    var displayName: String {
+        switch self {
+        case .overlappingMenuBar: "Overlapping Menu Bar"
+        case .belowMenuBar: "Below Menu Bar"
+        case .bottom: "Bottom"
+        case .left: "Left"
+        case .right: "Right"
+        }
+    }
+}
+
+enum WorkspaceBarNotchMode: String, CaseIterable, Codable, Identifiable {
+    case off
+    case moveBelowMenuBar
+    case splitActiveLeft
+    case splitActiveRight
+    case fillLeftOfNotch
+
+    var id: String {
+        rawValue
+    }
+
+    var isSplit: Bool {
+        self == .splitActiveLeft || self == .splitActiveRight
+    }
+
+    var displayName: String {
+        switch self {
+        case .off: "Off"
+        case .moveBelowMenuBar: "Move Below Menu Bar"
+        case .splitActiveLeft: "Split — Active Left"
+        case .splitActiveRight: "Split — Active Right"
+        case .fillLeftOfNotch: "Fill Left of Notch"
+        }
+    }
+}
+
 @MainActor
 final class WorkspaceBarManager {
     var screenProvider: @MainActor (CGDirectDisplayID) -> NSScreen? = { displayId in
@@ -19,7 +117,6 @@ final class WorkspaceBarManager {
     }
 
     private var barsByMonitor: [Monitor.ID: WorkspaceBarInstance] = [:]
-    private var temporaryMonitorIds: Set<Monitor.ID> = []
     private lazy var hoverMonitor: WorkspaceBarHoverMonitor = {
         let monitor = WorkspaceBarHoverMonitor()
         monitor.targets = { [weak self] in self?.hoverTargets() ?? [] }
@@ -47,7 +144,6 @@ final class WorkspaceBarManager {
     func apply(_ bars: [DesiredBarSurface]) {
         guard controller != nil, settings != nil else { return }
 
-        temporaryMonitorIds = Set(bars.filter(\.retainWhileHidden).map { $0.monitor.id })
         var staleMonitorIds = Set(barsByMonitor.keys)
         for bar in bars where bar.visible || bar.retainWhileHidden {
             staleMonitorIds.remove(bar.monitor.id)
@@ -65,7 +161,7 @@ final class WorkspaceBarManager {
         for monitorId in staleMonitorIds {
             removeBarForMonitor(monitorId)
         }
-        if temporaryMonitorIds.isEmpty { hoverMonitor.stop() } else { hoverMonitor.start() }
+        if bars.contains(where: \.retainWhileHidden) { hoverMonitor.start() } else { hoverMonitor.stop() }
     }
 
     func updateAppearance() {
@@ -330,7 +426,6 @@ final class WorkspaceBarManager {
 extension WorkspaceBarManager {
     func cleanup() {
         controller?.workspaceBarActivityController.stop()
-        temporaryMonitorIds = []
         hoverMonitor.stop()
         for monitorId in Array(barsByMonitor.keys) {
             removeBarForMonitor(monitorId)
@@ -356,8 +451,7 @@ extension WorkspaceBarManager {
 
     private func hoverTargets() -> [WorkspaceBarHoverTarget] {
         guard let controller, let settings else { return [] }
-        return temporaryMonitorIds.compactMap { id in
-            guard let instance = barsByMonitor[id] else { return nil }
+        return barsByMonitor.compactMap { id, instance in
             let resolved = settings.workspaceBar.resolved(for: instance.monitor)
             guard controller.canTemporarilyRevealWorkspaceBar(on: instance.monitor, resolved: resolved)
             else { return nil }
