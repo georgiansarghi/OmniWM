@@ -67,6 +67,29 @@ final class WorkspaceBarSettings {
         didSet { onChange?() }
     }
 
+    var visibility = WorkspaceBarSettings.defaults.visibility {
+        didSet { onChange?() }
+    }
+
+    var revealOnHover = WorkspaceBarSettings.defaults.revealOnHover {
+        didSet { onChange?() }
+    }
+
+    var activityReveal = WorkspaceBarSettings.defaults.activityReveal {
+        didSet { onChange?() }
+    }
+
+    var activityRevealSeconds = WorkspaceBarSettings.defaults.activityRevealSeconds {
+        didSet {
+            let normalized = WorkspaceBarActivityReveal.validatedDuration(activityRevealSeconds)
+            guard normalized == activityRevealSeconds else {
+                activityRevealSeconds = normalized
+                return
+            }
+            onChange?()
+        }
+    }
+
     var revealModifier = WorkspaceBarSettings.defaults.revealModifier {
         didSet { onChange?() }
     }
@@ -135,6 +158,11 @@ final class WorkspaceBarSettings {
             var normalized = monitorOverrides
             var changed = false
             for index in normalized.indices {
+                let duration = normalized[index].activityRevealSeconds.map(WorkspaceBarActivityReveal.validatedDuration)
+                if normalized[index].activityRevealSeconds != duration {
+                    normalized[index].activityRevealSeconds = duration
+                    changed = true
+                }
                 let opacity = Self.normalizedInactiveIconOpacity(normalized[index].inactiveIconOpacity)
                 if normalized[index].inactiveIconOpacity != opacity {
                     normalized[index].inactiveIconOpacity = opacity
@@ -179,7 +207,11 @@ final class WorkspaceBarSettings {
             xOffset: xOffset,
             yOffset: yOffset,
             accentColor: accentColor,
-            textColor: textColor
+            textColor: textColor,
+            visibility: visibility,
+            revealOnHover: revealOnHover,
+            activityReveal: activityReveal,
+            activityRevealSeconds: activityRevealSeconds
         )
     }
 
@@ -204,6 +236,10 @@ final class WorkspaceBarSettings {
 
     func applyAppearance(_ bar: SettingsExport.WorkspaceBar, monitorOverrides: [MonitorBarSettings]) {
         reserveLayoutSpace = bar.reserveLayoutSpace
+        visibility = bar.visibility
+        revealOnHover = bar.revealOnHover
+        activityReveal = bar.activityReveal
+        activityRevealSeconds = WorkspaceBarActivityReveal.validatedDuration(bar.activityRevealSeconds)
         revealModifier = bar.revealModifier
         revealHoldMilliseconds = WorkspaceBarSettings.validatedRevealHoldMilliseconds(
             bar.revealHoldMilliseconds
@@ -240,6 +276,7 @@ final class WorkspaceBarSettings {
     }
 
     private func resolved(override: MonitorBarSettings?) -> ResolvedBarSettings {
+        let position = override?.position ?? self.position
         return ResolvedBarSettings(
             enabled: override?.enabled ?? enabled,
             showLabels: override?.showLabels ?? showLabels,
@@ -248,10 +285,10 @@ final class WorkspaceBarSettings {
             hideEmptyWorkspaces: override?.hideEmptyWorkspaces ?? hideEmptyWorkspaces,
             excludedBundleIDs: excludedBundleIDs,
             reserveLayoutSpace: override?.reserveLayoutSpace ?? reserveLayoutSpace,
-            notchMode: override?.notchMode ?? notchMode,
+            notchMode: position.usesNotch ? (override?.notchMode ?? notchMode) : .off,
             notchActiveZoneWidth: override?.notchActiveZoneWidth ?? notchActiveZoneWidth,
             systemStatsButton: systemStatsButton,
-            position: override?.position ?? position,
+            position: position,
             windowLevel: override?.windowLevel ?? windowLevel,
             height: override?.height ?? height,
             backgroundOpacity: override?.backgroundOpacity ?? backgroundOpacity,
@@ -263,10 +300,16 @@ final class WorkspaceBarSettings {
             xOffset: override?.xOffset ?? xOffset,
             yOffset: override?.yOffset ?? yOffset,
             accentColor: accentColor,
-            textColor: textColor
+            textColor: textColor,
+            visibility: override?.visibility ?? visibility,
+            revealOnHover: override?.revealOnHover ?? revealOnHover,
+            activityReveal: override?.activityReveal ?? activityReveal,
+            activityRevealSeconds: override?.activityRevealSeconds ?? activityRevealSeconds
         )
     }
+}
 
+extension WorkspaceBarSettings {
     @discardableResult
     func addExcludedBundleID(_ rawBundleID: String) -> Bool {
         let bundleID = rawBundleID.trimmingCharacters(in: .whitespacesAndNewlines)

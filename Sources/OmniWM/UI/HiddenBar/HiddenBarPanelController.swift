@@ -5,7 +5,7 @@ import AppKit
 import SwiftUI
 
 struct HiddenBarPanelPlacement: Equatable {
-    let anchor: CGPoint
+    let attachment: PopupAttachment
     let visibleFrame: CGRect
 }
 
@@ -20,9 +20,10 @@ final class HiddenBarPanelController {
 
     var onActivate: ((MenuBarItemKey) -> Void)?
     var isExemptWindow: ((NSWindow) -> Bool)?
+    var onVisibilityChanged: (() -> Void)?
 
     private let model = HiddenBarPanelModel()
-    private var panel: NonactivatingPanel?
+    private(set) var panel: NonactivatingPanel?
     private let dismissalMonitor = PanelDismissalMonitor()
     private var lastPlacement: HiddenBarPanelPlacement?
     private weak var previousKeyWindow: NSWindow?
@@ -48,27 +49,13 @@ final class HiddenBarPanelController {
         dismissalMonitor.stop()
         OwnedWindowRegistry.shared.unregister(surfaceId: Self.surfaceId)
         panel?.orderOut(nil)
+        onVisibilityChanged?()
         if let keyWindow, keyWindow.isVisible {
             keyWindow.makeKey()
             if let firstResponder {
                 keyWindow.makeFirstResponder(firstResponder)
             }
         }
-    }
-
-    nonisolated static func panelAnchor(
-        monitor: Monitor,
-        resolved: ResolvedBarSettings,
-        barVisible: Bool
-    ) -> CGPoint {
-        guard barVisible else {
-            return CGPoint(x: monitor.frame.midX, y: monitor.visibleFrame.maxY)
-        }
-        let geometry = WorkspaceBarGeometry.resolve(monitor: monitor, resolved: resolved, isVisible: true)
-        return CGPoint(
-            x: monitor.frame.midX + CGFloat(resolved.xOffset),
-            y: geometry.originY(for: monitor) + CGFloat(resolved.yOffset)
-        )
     }
 
     nonisolated static func glyphDisplayWidth(for size: CGSize, rowHeight: CGFloat) -> CGFloat {
@@ -150,6 +137,7 @@ final class HiddenBarPanelController {
         )
         panel.makeKeyAndOrderFront(nil)
         isVisible = true
+        onVisibilityChanged?()
         dismissalMonitor.start(
             panels: [panel],
             isExemptWindow: { [weak self] window in
@@ -182,7 +170,7 @@ final class HiddenBarPanelController {
             padding: Self.padding
         )
         panel.setFrame(
-            Self.panelFrame(anchor: placement.anchor, size: size, screenVisibleFrame: placement.visibleFrame),
+            placement.attachment.frame(size: size, visibleFrame: placement.visibleFrame),
             display: true
         )
     }

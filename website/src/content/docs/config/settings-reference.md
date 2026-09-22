@@ -223,19 +223,23 @@ The per-monitor workspace bar. Per-monitor exceptions live in [`monitorBarOverri
 | `showLabels` | boolean | `true` | Shows workspace names next to their numbers. |
 | `showFloatingWindows` | boolean | `false` | Includes floating windows' icons in workspace pills. |
 | `windowLevel` | string | `"popup"` | Bar window level: `normal`, `floating`, `status`, `popup`, `screensaver`. |
-| `position` | string | `"overlappingMenuBar"` | `overlappingMenuBar` or `belowMenuBar`. |
-| `notchMode` | string | `"moveBelowMenuBar"` | Notch handling: `off`, `moveBelowMenuBar`, `splitActiveLeft`, `splitActiveRight`, or `fillLeftOfNotch`. The last fills the menu-bar area left of the notch and covers app menus; without a notch it uses the left half of the menu bar. In this mode `position`, `xOffset`, `yOffset`, `height`, and `reserveLayoutSpace` are ignored: the bar uses the menu-bar height and reserves no layout space. |
+| `position` | string | `"overlappingMenuBar"` | `overlappingMenuBar`, `belowMenuBar`, `bottom`, `left`, or `right`. **Unreleased:** bottom and side placements follow the usable display edge and ignore notch modes. Side bars stack content vertically. |
+| `notchMode` | string | `"moveBelowMenuBar"` | Notch handling: `off`, `moveBelowMenuBar`, `splitActiveLeft`, `splitActiveRight`, or `fillLeftOfNotch`. The last fills the menu-bar area left of the notch and covers app menus; without a notch it uses the left half of the menu bar. Only top positions use notch handling. When `fillLeftOfNotch` is effective, it overrides the top position, `xOffset`, `yOffset`, `height`, and `reserveLayoutSpace`: the bar uses the menu-bar height and reserves no layout space. Bottom/left/right ignore this mode without changing its saved value. |
 | `notchActiveZoneWidth` | float | `180.0` | Width in points of the active zone around the notch. |
 | `systemStatsButton` | boolean | `false` | Adds a system stats button to the bar. |
 | `deduplicateAppIcons` | boolean | `false` | Collapses repeated icons of the same app within a pill. |
 | `hideEmptyWorkspaces` | boolean | `false` | Hides pills for workspaces with no windows. |
 | `excludedBundleIDs` | string array | `[]` | Bundle IDs whose windows never contribute icons to the bar. |
 | `iconOverrides` | table | `{}` | Bundle ID → custom icon source (see below). |
-| `reserveLayoutSpace` | boolean | `false` | Reserves tiled layout space using the configured bar height. |
-| `revealModifier` | string | `"off"` | Reveal the bar by holding a modifier. Any value other than `off` makes the bar overlay-only: it reserves no layout space at all while the modifier is configured, not just while it is held. Values: `off`, `option`, `control`, `command`, `shift`, `controlOption`, `optionCommand`, `optionShift`, `controlCommand`, `controlShift`, `commandShift`, `controlOptionCommand`, `controlOptionShift`, `optionCommandShift`, `controlCommandShift`, `controlOptionCommandShift`. |
+| `reserveLayoutSpace` | boolean | `false` | Reserves the configured bar thickness at its selected edge, including layout-fullscreen windows. Offsets do not change the reservation. Ignored in `temporary` visibility mode. Stored modifier settings do not affect reservation in `alwaysVisible` mode. |
+| `visibility` | string | `"alwaysVisible"` | **Unreleased:** `"alwaysVisible"` or `"temporary"`. Temporary bars are normally hidden and overlay-only; select independent pointer, activity, or modifier triggers. Supports per-display overrides. |
+| `revealOnHover` | boolean | `true` | **Unreleased:** in temporary mode, allows pointer proximity to summon the bar. Both hover delays are zero. When false, hovering an already-visible bar or using its popups can still keep it open. Supports per-display overrides. |
+| `activityReveal` | string | `"off"` | **Unreleased:** requires temporary visibility, not pointer reveal. `"off"`, `"workspace"`, `"workspaceAndColumn"` (Niri), or `"focus"` (managed focused-window changes). All enabled presets include workspace changes. Supports per-display overrides. |
+| `activityRevealSeconds` | number | `1.0` | **Unreleased:** time to keep visible after the most recent qualifying change, in seconds (0.1–10). Repeated changes restart this duration; hover delays remain zero. Supports per-display overrides. |
+| `revealModifier` | string | `"off"` | Global trigger for temporary displays: reveal by holding a modifier, independently of pointer and activity triggers. Ignored in always-visible mode; stored preferences are retained. Values: `off`, `option`, `control`, `command`, `shift`, `controlOption`, `optionCommand`, `optionShift`, `controlCommand`, `controlShift`, `commandShift`, `controlOptionCommand`, `controlOptionShift`, `optionCommandShift`, `controlCommandShift`, `controlOptionCommandShift`. |
 | `revealHoldMilliseconds` | float | `200.0` | How long the modifier must be held before the bar reveals. |
-| `hideInNativeFullscreen` | boolean | `false` | Hides the bar while a native-fullscreen space is active. `fillLeftOfNotch` always hides there, regardless of this setting. |
-| `height` | float | `24.0` | Bar height in points. |
+| `hideInNativeFullscreen` | boolean | `false` | Hides the bar while a native-fullscreen space is active. Effective `fillLeftOfNotch` at a top position always hides there, regardless of this setting. Bottom/left/right follow this setting even when Fill Left is saved. |
+| `height` | float | `24.0` | Bar thickness in points: height for horizontal bars, width for left/right bars. Side bars scroll vertically when their content exceeds the usable display height. |
 | `backgroundOpacity` | float | `0.1` | Bar background opacity (`0.0`–`1.0`). |
 | `inactiveIconOpacity` *(optional)* | float | unset | Opacity of unfocused app icons; finite values clamp to `0.0`–`1.0`. Omit to use the built-in appearance; Reset to System Default clears the override. |
 | `transparentBackground` *(optional)* | boolean | `false` | Hides the bar material, tint, and border while keeping its contents interactive. Takes precedence over `solidBlackBackground`. |
@@ -246,6 +250,8 @@ The per-monitor workspace bar. Per-monitor exceptions live in [`monitorBarOverri
 | `yOffset` | float | `0.0` | Vertical offset in points; positive values move the bar up, negative values move it down. |
 | `accentColor` *(optional)* | color table | unset | Accent color override; unset uses the built-in accent. |
 | `textColor` *(optional)* | color table | unset | Text color override; unset uses the built-in text color. |
+
+Existing modifier-only configurations load as temporary bars with pointer reveal disabled; explicit new keys take precedence. See [Visibility and reveal triggers](/features/workspace-bar/#visibility-and-reveal-triggers) for examples.
 
 `iconOverrides` maps a bundle ID to either an image file path — absolute, `~/`-relative, or relative to the `omniwm` config directory — or `bundle-resource:NAME` for an image resource inside that app's own bundle:
 
@@ -447,7 +453,7 @@ Five arrays hold per-monitor exceptions to the global tables. Every entry requir
 
 | Array | Overridable keys |
 | --- | --- |
-| `monitorBarOverrides` | `enabled`, `showLabels`, `showFloatingWindows`, `deduplicateAppIcons`, `hideEmptyWorkspaces`, `reserveLayoutSpace`, `notchMode`, `notchActiveZoneWidth`, `position`, `windowLevel`, `height`, `backgroundOpacity`, `inactiveIconOpacity`, `transparentBackground`, `solidBlackBackground`, `showItemBackgrounds`, `showAccentHighlights`, `xOffset`, `yOffset` — see [`workspaceBar`](#workspacebar) |
+| `monitorBarOverrides` | `enabled`, `visibility`, `revealOnHover`, `activityReveal`, `activityRevealSeconds`, `showLabels`, `showFloatingWindows`, `deduplicateAppIcons`, `hideEmptyWorkspaces`, `reserveLayoutSpace`, `notchMode`, `notchActiveZoneWidth`, `position`, `windowLevel`, `height`, `backgroundOpacity`, `inactiveIconOpacity`, `transparentBackground`, `solidBlackBackground`, `showItemBackgrounds`, `showAccentHighlights`, `xOffset`, `yOffset` — see [`workspaceBar`](#workspacebar) |
 | `monitorOrientationOverrides` | `orientation`: `horizontal` or `vertical` layout orientation for that monitor |
 | `monitorNiriOverrides` | `visibleContainerCount`, `centerFocusedColumn`, `alwaysCenterSingleColumn`, `singleWindowFit`, `infiniteLoop` — see [`niri`](#niri) |
 | `monitorDwindleOverrides` | `smartSplit`, `defaultSplitRatio`, `splitWidthMultiplier`, `singleWindowFit`, `useGlobalGaps`, `innerGap` — see [`dwindle`](#dwindle) |

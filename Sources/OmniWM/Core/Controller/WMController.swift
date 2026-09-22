@@ -96,15 +96,17 @@ final class WMController {
     @ObservationIgnored
     private(set) lazy var workspaceBarManager: WorkspaceBarManager = .init(motionPolicy: motionPolicy)
     @ObservationIgnored
+    private(set) lazy var workspaceBarActivityController = WorkspaceBarActivityController(controller: self)
+    @ObservationIgnored
     private var runtimeFrameJobCancellationSuppressionDepth: Int = 0
     @ObservationIgnored
     let floatDemotionTracker = FloatDemotionTracker()
     @ObservationIgnored
     private var hiddenWorkspaceBarMonitorIds: Set<Monitor.ID> = []
     @ObservationIgnored
-    private var isWorkspaceBarRevealHeld = false
+    private(set) var isWorkspaceBarRevealHeld = false
     @ObservationIgnored
-    private lazy var workspaceBarRevealMonitor: WorkspaceBarRevealMonitor = {
+    private(set) lazy var workspaceBarRevealMonitor: WorkspaceBarRevealMonitor = {
         let monitor = WorkspaceBarRevealMonitor()
         monitor.onRevealChanged = { [weak self] revealed in
             self?.setWorkspaceBarRevealHeld(revealed)
@@ -370,21 +372,6 @@ extension WMController {
         moveMouseToFocusedWindowEnabled = enabled
     }
 
-    func syncWorkspaceBarRevealMonitor() {
-        guard hasStartedServices,
-              settings.workspaceBar.revealModifier != .off,
-              workspaceBarRefreshIsEnabled
-        else {
-            workspaceBarRevealMonitor.stop()
-            return
-        }
-
-        workspaceBarRevealMonitor.start(
-            modifier: settings.workspaceBar.revealModifier,
-            holdMilliseconds: settings.workspaceBar.revealHoldMilliseconds
-        )
-    }
-
     func setWorkspaceBarRevealHeld(_ revealed: Bool) {
         guard isWorkspaceBarRevealHeld != revealed else { return }
         isWorkspaceBarRevealHeld = revealed
@@ -416,9 +403,8 @@ extension WMController {
             || ipcApplicationBridge?.hasSubscribers(for: .layoutChanged) == true
     }
 
-    func isWorkspaceBarConfiguredVisible(on monitor: Monitor, resolved: ResolvedBarSettings) -> Bool {
-        guard resolved.enabled, !hiddenWorkspaceBarMonitorIds.contains(monitor.id) else { return false }
-        return settings.workspaceBar.revealModifier == .off || isWorkspaceBarRevealHeld
+    func isWorkspaceBarEnabled(on monitor: Monitor, resolved: ResolvedBarSettings) -> Bool {
+        resolved.enabled && !hiddenWorkspaceBarMonitorIds.contains(monitor.id)
     }
 
     func pruneHiddenWorkspaceBarMonitorIds() {
@@ -433,6 +419,7 @@ extension WMController {
         domains: InvalidationDomain,
         surfaceScope: SessionSurfaceInvalidationScope
     ) {
+        workspaceBarActivityController.refresh()
         switch surfaceScope {
         case .full:
             surfaceReconciler.noteWorldChanged()

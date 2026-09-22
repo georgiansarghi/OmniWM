@@ -7,6 +7,7 @@ import OmniWMIPC
 
 extension WMController {
     func handleSessionStateChanged(surfaceScope: SessionSurfaceInvalidationScope) {
+        workspaceBarActivityController.refresh()
         switch surfaceScope {
         case .full:
             surfaceReconciler.noteWorldChanged()

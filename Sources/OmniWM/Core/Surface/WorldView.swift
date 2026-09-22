@@ -121,8 +121,10 @@ struct WorldView {
                         showAccentHighlights: resolved.showAccentHighlights,
                         barHeight: geometry.barHeight,
                         accentColor: resolved.accentColor,
-                        textColor: resolved.textColor
-                    )
+                        textColor: resolved.textColor,
+                        orientation: resolved.position.isVertical ? .vertical : .horizontal
+                    ),
+                    retainWhileHidden: controller.canTemporarilyRevealWorkspaceBar(on: monitor, resolved: resolved)
                 )
             )
         }

@@ -39,6 +39,27 @@ enum WorkspaceBarWindowLevel: String, CaseIterable, Codable, Identifiable {
 enum WorkspaceBarPosition: String, CaseIterable, Codable, Identifiable {
     case overlappingMenuBar
     case belowMenuBar
+    case bottom
+    case left
+    case right
+
+    var isVertical: Bool {
+        self == .left || self == .right
+    }
+
+    var usesNotch: Bool {
+        self == .overlappingMenuBar || self == .belowMenuBar
+    }
+
+    var popupEdge: PopupAttachment.Edge {
+        switch self {
+        case .overlappingMenuBar,
+             .belowMenuBar: .below
+        case .bottom: .above
+        case .left: .right
+        case .right: .left
+        }
+    }
 
     var id: String {
         rawValue
@@ -48,6 +69,9 @@ enum WorkspaceBarPosition: String, CaseIterable, Codable, Identifiable {
         switch self {
         case .overlappingMenuBar: "Overlapping Menu Bar"
         case .belowMenuBar: "Below Menu Bar"
+        case .bottom: "Bottom"
+        case .left: "Left"
+        case .right: "Right"
         }
     }
 }
@@ -93,6 +117,14 @@ final class WorkspaceBarManager {
     }
 
     private var barsByMonitor: [Monitor.ID: WorkspaceBarInstance] = [:]
+    private lazy var hoverMonitor: WorkspaceBarHoverMonitor = {
+        let monitor = WorkspaceBarHoverMonitor()
+        monitor.targets = { [weak self] in self?.hoverTargets() ?? [] }
+        monitor.pointer = { [weak self] in self?.controller?.currentMouseLocation() ?? NSEvent.mouseLocation }
+        monitor.onRevealChanged = { [weak self] in self?.controller?.requestWorkspaceBarRefresh() }
+        return monitor
+    }()
+
     private weak var controller: WMController?
     private weak var settings: SettingsStore?
     private let motionPolicy: MotionPolicy
@@ -105,13 +137,15 @@ final class WorkspaceBarManager {
     func setup(controller: WMController, settings: SettingsStore) {
         self.controller = controller
         self.settings = settings
+        controller.systemStatsPopupController.onVisibilityChanged = { [weak self] in self?.refreshHover() }
+        controller.hiddenBarController.onPanelVisibilityChanged = { [weak self] in self?.refreshHover() }
     }
 
     func apply(_ bars: [DesiredBarSurface]) {
         guard controller != nil, settings != nil else { return }
 
         var staleMonitorIds = Set(barsByMonitor.keys)
-        for bar in bars where bar.visible {
+        for bar in bars where bar.visible || bar.retainWhileHidden {
             staleMonitorIds.remove(bar.monitor.id)
             if let existing = barsByMonitor[bar.monitor.id] {
                 if !updateBarForMonitor(bar.monitor, snapshot: bar.snapshot, instance: existing) {
@@ -121,11 +155,13 @@ final class WorkspaceBarManager {
             } else {
                 createBarForMonitor(bar.monitor, snapshot: bar.snapshot)
             }
+            applyVisibility(bar.visible, on: bar.monitor.id)
         }
 
         for monitorId in staleMonitorIds {
             removeBarForMonitor(monitorId)
         }
+        if bars.contains(where: \.retainWhileHidden) { hoverMonitor.start() } else { hoverMonitor.stop() }
     }
 
     func updateAppearance() {
@@ -184,7 +220,6 @@ final class WorkspaceBarManager {
             id: instance.surfaceId(),
             policy: WorkspaceBarInstance.surfacePolicy
         )
-        primary.panel.orderFrontRegardless()
     }
 
     private func updateBarForMonitor(
@@ -241,7 +276,7 @@ final class WorkspaceBarManager {
                 controller?.toggleSystemStatsFromBar(on: monitorId)
             },
             onSystemStatsAnchorChange: { [weak self] anchor in
-                self?.barsByMonitor[monitorId]?.statsAnchor = anchor
+                self?.barsByMonitor[monitorId]?.statsAnchorView = anchor
             }
         )
     }
@@ -254,12 +289,6 @@ final class WorkspaceBarManager {
             instance.primary.panel.orderOut(nil)
             instance.primary.panel.close()
             barsByMonitor.removeValue(forKey: monitorId)
-        }
-    }
-
-    func cleanup() {
-        for monitorId in Array(barsByMonitor.keys) {
-            removeBarForMonitor(monitorId)
         }
     }
 
@@ -286,31 +315,17 @@ final class WorkspaceBarManager {
                 monitorId: instance.monitorId
             )
             removeSecondaryPanel(from: instance)
-            let width = instance.measuredWidth(
+            let length = instance.measuredLength(
                 for: snapshot,
                 slice: .all,
                 showsSystemStatsButton: snapshot.showSystemStatsButton
             )
-            let frame = geometry.frame(fittingWidth: width, monitor: monitor, resolved: resolved)
+            let frame = geometry.frame(fittingLength: length, monitor: monitor, resolved: resolved)
             instance.primary.applyFrame(frame, using: frameApplier)
         }
         if !snapshot.showSystemStatsButton {
-            instance.statsAnchor = nil
+            instance.statsAnchorView = nil
             controller?.dismissSystemStatsPopup(anchoredTo: instance.monitorId)
-        }
-    }
-
-    func statsAnchor(on monitorId: Monitor.ID) -> CGPoint? {
-        barsByMonitor[monitorId]?.statsAnchor
-    }
-
-    func primaryBarFrame(on monitorId: Monitor.ID) -> CGRect? {
-        barsByMonitor[monitorId]?.primary.lastAppliedFrame
-    }
-
-    func isWorkspaceBarWindow(_ window: NSWindow) -> Bool {
-        barsByMonitor.values.contains {
-            $0.primary.panel === window || $0.secondary?.panel === window
         }
     }
 
@@ -362,7 +377,6 @@ final class WorkspaceBarManager {
             id: instance.secondarySurfaceId(),
             policy: WorkspaceBarInstance.surfacePolicy
         )
-        island.panel.orderFrontRegardless()
         return island
     }
 
@@ -405,6 +419,82 @@ final class WorkspaceBarManager {
             instance.secondary = secondary
         } else {
             removeSecondaryPanel(from: instance)
+        }
+    }
+}
+
+extension WorkspaceBarManager {
+    func cleanup() {
+        controller?.workspaceBarActivityController.stop()
+        hoverMonitor.stop()
+        for monitorId in Array(barsByMonitor.keys) {
+            removeBarForMonitor(monitorId)
+        }
+    }
+
+    func isHoverRevealed(on monitorId: Monitor.ID) -> Bool {
+        hoverMonitor.state.revealed.contains(monitorId)
+    }
+
+    func refreshHover() {
+        hoverMonitor.refresh()
+    }
+
+    private func applyVisibility(_ visible: Bool, on monitorId: Monitor.ID) {
+        guard let instance = barsByMonitor[monitorId] else { return }
+        let panels = [instance.primary.panel, instance.secondary?.panel].compactMap { $0 }
+        for panel in panels where panel.isVisible != visible {
+            if visible { panel.orderFrontRegardless() } else { panel.orderOut(nil) }
+        }
+        if !visible { controller?.dismissSystemStatsPopup(anchoredTo: monitorId) }
+    }
+
+    private func hoverTargets() -> [WorkspaceBarHoverTarget] {
+        guard let controller, let settings else { return [] }
+        return barsByMonitor.compactMap { id, instance in
+            let resolved = settings.workspaceBar.resolved(for: instance.monitor)
+            guard controller.canTemporarilyRevealWorkspaceBar(on: instance.monitor, resolved: resolved)
+            else { return nil }
+            let panels = [instance.primary.panel, instance.secondary?.panel].compactMap { $0 }
+            return WorkspaceBarHoverTarget(
+                monitor: instance.monitor,
+                frames: panels.map(\.frame),
+                position: resolved.position,
+                isVisible: instance.primary.panel.isVisible,
+                isPinned: panels.contains { $0.attachedSheet != nil }
+                    || controller.hasOpenWorkspaceBarPopup(on: instance.monitor),
+                associatedFrames: [controller.hiddenBarController.statusItems.fallbackFrame(on: id)].compactMap { $0 },
+                revealOnHover: resolved.revealOnHover
+            )
+        }
+    }
+
+    func statsAnchor(on monitorId: Monitor.ID) -> CGPoint? {
+        guard let view = barsByMonitor[monitorId]?.statsAnchorView,
+              let window = view.window, window.isVisible else { return nil }
+        let frame = window.convertToScreen(view.convert(view.bounds, to: nil))
+        return WorkspaceBarGeometry.statsButtonAnchor(buttonFrame: frame)
+    }
+
+    func primaryDisplayedFrame(on monitorId: Monitor.ID) -> CGRect? {
+        barsByMonitor[monitorId]?.primary.panel.frame
+    }
+
+    func popupAttachment(on monitorId: Monitor.ID, forStats: Bool = false) -> PopupAttachment? {
+        guard let instance = barsByMonitor[monitorId], let settings else { return nil }
+        let island = forStats && instance.secondary?.showsSystemStatsButton == true
+            ? instance.secondary : instance.primary
+        guard let island else { return nil }
+        let edge = settings.workspaceBar.resolved(for: instance.monitor).position.popupEdge
+        return PopupAttachment(
+            sourceFrame: island.panel.frame, edge: edge,
+            alignment: forStats ? statsAnchor(on: monitorId) : nil
+        )
+    }
+
+    func isWorkspaceBarWindow(_ window: NSWindow) -> Bool {
+        barsByMonitor.values.contains {
+            $0.primary.panel === window || $0.secondary?.panel === window
         }
     }
 }

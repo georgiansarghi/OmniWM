@@ -71,6 +71,9 @@ final class StatusBarController: NSObject {
         host.isExemptWindow = { [weak hiddenBarController] in
             hiddenBarController?.statusItems.ownsStatusItemWindow($0) == true
         }
+        host.onVisibilityChanged = { [weak controller] in
+            controller?.workspaceBarManager.refreshHover()
+        }
         menuHost = host
 
         hiddenBarController.statusItems.bind(omniButton: button, statusItem: ownedStatusItem)
@@ -112,12 +115,16 @@ final class StatusBarController: NSObject {
         }
     }
 
+    func isPanelVisible(on monitor: Monitor) -> Bool {
+        menuHost?.isVisible == true && menuHost?.panel?.screen?.displayId == monitor.displayId
+    }
+
     func dismissPanel() {
         menuHost?.dismiss()
     }
 
     private func showMenu(from anchor: NSView) {
-        menuHost?.toggle(from: anchor)
+        menuHost?.toggle(from: anchor, attachment: controller?.statusMenuAttachment(from: anchor))
     }
 
     func handleTraceCaptureStateChange() {

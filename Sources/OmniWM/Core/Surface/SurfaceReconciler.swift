@@ -225,6 +225,7 @@ final class SurfaceReconciler {
     private func runFullReconcile(forceOrdering: Bool) {
         BorderOpMetricsRecorder.shared.noteFullScenePass()
         guard let controller else { return }
+        controller.workspaceBarActivityController.refresh()
         let world = WorldView(controller: controller)
         nativeFullscreenState.prepareForReconcile(
             servicesStarted: world.hasStartedServices,

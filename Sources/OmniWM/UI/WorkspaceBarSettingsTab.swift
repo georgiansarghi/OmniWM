@@ -60,6 +60,38 @@ private struct GlobalBarSettingsSection: View {
     @Bindable var controller: WMController
     @State private var pendingAppearanceSync: Task<Void, Never>?
 
+    private var hasTemporaryScope: Bool {
+        settings.workspaceBar.visibility == .temporary
+            || settings.workspaceBar.monitorOverrides.contains { $0.visibility == .temporary }
+    }
+
+    private var activitySettings: some View {
+        Group {
+            Picker("Briefly Show After Changes", selection: Bindable(settings.workspaceBar).activityReveal) {
+                ForEach(WorkspaceBarActivityReveal.allCases, id: \.self) { mode in
+                    Text(mode.displayName).tag(mode)
+                }
+            }
+            .onChange(of: settings.workspaceBar.activityReveal) { _, _ in
+                controller.updateWorkspaceBarSettings()
+            }
+            SettingsSliderRow(
+                label: "Keep Visible After Last Change",
+                value: Bindable(settings.workspaceBar).activityRevealSeconds,
+                range: 0.1 ... 10, step: 0.1,
+                valueText: String(format: "%.1f s", settings.workspaceBar.activityRevealSeconds)
+            )
+            .disabled(settings.workspaceBar.activityReveal == .off)
+            .onChange(of: settings.workspaceBar.activityRevealSeconds) { _, _ in
+                controller.updateWorkspaceBarSettings()
+            }
+        }
+        .disabled(settings.workspaceBar.visibility != .temporary)
+        .help(
+            "In Show Temporarily mode, each qualifying change restarts the duration, independently of pointer reveal."
+        )
+    }
+
     var body: some View {
         Section("Workspace Bar") {
             Toggle("Enable Workspace Bar", isOn: Bindable(settings.workspaceBar).enabled)
@@ -94,8 +126,39 @@ private struct GlobalBarSettingsSection: View {
                         controller.updateWorkspaceBarSettings()
                     }
                     .help(
-                        "Reserve tiled layout space using the configured workspace bar height."
+                        "Reserve tiled layout space at the selected edge using the configured bar thickness."
                     )
+
+                Picker("Visibility", selection: Bindable(settings.workspaceBar).visibility) {
+                    ForEach(WorkspaceBarVisibility.allCases) { mode in
+                        Text(mode.displayName).tag(mode)
+                    }
+                }
+                .onChange(of: settings.workspaceBar.visibility) { _, _ in
+                    controller.updateWorkspaceBarSettings()
+                }
+                .help(
+                    "Show Temporarily keeps the bar hidden until a selected trigger reveals it, without moving windows."
+                )
+
+                Toggle("Pointer Approaches the Bar", isOn: Bindable(settings.workspaceBar).revealOnHover)
+                    .disabled(settings.workspaceBar.visibility != .temporary)
+                    .onChange(of: settings.workspaceBar.revealOnHover) { _, _ in
+                        controller.updateWorkspaceBarSettings()
+                    }
+                    .help(
+                        "Reveal immediately near the bar. When off, the pointer can only keep an already-visible bar open."
+                    )
+
+                activitySettings
+
+                if settings.workspaceBar.visibility == .temporary,
+                   !settings.workspaceBar.revealOnHover, settings.workspaceBar.activityReveal == .off,
+                   settings.workspaceBar.revealModifier == .off
+                {
+                    Text("No reveal triggers selected. Choose a trigger to show the bar.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
 
                 Picker("Reveal on Modifier Hold", selection: Bindable(settings.workspaceBar).revealModifier) {
                     ForEach(WorkspaceBarRevealModifier.allCases, id: \.self) { modifier in
@@ -105,7 +168,8 @@ private struct GlobalBarSettingsSection: View {
                 .onChange(of: settings.workspaceBar.revealModifier) { _, _ in
                     controller.updateWorkspaceBarSettings()
                 }
-                .help("Show the workspace bar as an overlay only while the selected modifiers are held")
+                .disabled(!hasTemporaryScope)
+                .help("Applies globally to Show Temporarily displays, independently of mouse or activity reveal.")
 
                 if settings.workspaceBar.revealModifier != .off {
                     SettingsSliderRow(
@@ -115,6 +179,7 @@ private struct GlobalBarSettingsSection: View {
                         step: 50,
                         valueText: "\(Int(settings.workspaceBar.revealHoldMilliseconds)) ms"
                     )
+                    .disabled(!hasTemporaryScope)
                     .onChange(of: settings.workspaceBar.revealHoldMilliseconds) { _, _ in
                         controller.updateWorkspaceBarSettings()
                     }
@@ -144,7 +209,8 @@ private struct GlobalBarSettingsSection: View {
                 }
                 .help(
                     "Move below the notch, split around it, or fill the area to its left, covering application menus. "
-                        + "Without a notch, Fill Left covers the left half of the menu bar."
+                        + "Without a notch, Fill Left covers the left half of the menu bar. "
+                        + "Notch modes are ignored at Bottom, Left, and Right."
                 )
 
                 if settings.workspaceBar.notchMode.isSplit {
@@ -210,7 +276,7 @@ private struct GlobalBarSettingsSection: View {
 
             Section("Appearance") {
                 SettingsSliderRow(
-                    label: "Bar Height",
+                    label: "Bar Thickness",
                     value: Bindable(settings.workspaceBar).height,
                     range: 20 ... 40,
                     step: 2,
@@ -286,7 +352,9 @@ private struct GlobalBarSettingsSection: View {
             }
         }
     }
+}
 
+extension GlobalBarSettingsSection {
     private var customAccentColorBinding: Binding<Bool> {
         Binding(
             get: { settings.workspaceBar.accentColor != nil },
