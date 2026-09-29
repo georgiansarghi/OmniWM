@@ -873,6 +873,7 @@
         }
       }
     },
+    "%.1f s" : {},
     "%@" : {
       "localizations" : {
         "ja" : {
@@ -16701,6 +16702,7 @@
         }
       }
     },
+    "Always Visible" : {},
     "Animation Duration" : {
       "localizations" : {
         "ja" : {
@@ -16825,6 +16827,7 @@
         }
       }
     },
+    "Any Focused-Window Change" : {},
     "App Bundle Not Found" : {
       "localizations" : {
         "ja" : {
@@ -18313,6 +18316,7 @@
         }
       }
     },
+    "Applies globally to Show Temporarily displays, independently of mouse or activity reveal." : {},
     "Apply" : {
       "localizations" : {
         "ja" : {
@@ -23027,6 +23031,7 @@
         }
       }
     },
+    "Briefly Show After Changes" : {},
     "Briefly shows each tile’s number on its physical display." : {
       "localizations" : {
         "ja" : {
@@ -64346,6 +64351,7 @@
         }
       }
     },
+    "In Show Temporarily mode, each qualifying change restarts the duration, independently of pointer reveal." : {},
     "In macOS Full Screen" : {
       "localizations" : {
         "ja" : {
@@ -68946,6 +68952,7 @@
         }
       }
     },
+    "Keep Visible After Last Change" : {},
     "Keep window on same screen side when moving to root" : {
       "localizations" : {
         "ja" : {
@@ -75518,6 +75525,7 @@
         }
       }
     },
+    "Modifier hold: %@ (configured globally)" : {},
     "Modifier side" : {
       "localizations" : {
         "ja" : {
@@ -86191,6 +86199,7 @@
         }
       }
     },
+    "No reveal triggers selected. Choose a trigger to show the bar." : {},
     "No role" : {
       "localizations" : {
         "ja" : {
@@ -99504,6 +99513,7 @@
         }
       }
     },
+    "Pointer Approaches the Bar" : {},
     "Popup" : {
       "localizations" : {
         "ja" : {
@@ -114758,6 +114768,7 @@
         }
       }
     },
+    "Reveal immediately near the bar. When off, the pointer can only keep an already-visible bar open." : {},
     "Reveal in Finder" : {
       "localizations" : {
         "ja" : {
@@ -124965,6 +124976,9 @@
         }
       }
     },
+    "Show Temporarily" : {},
+    "Show Temporarily keeps the bar hidden until a selected trigger reveals it, without moving windows." : {},
+    "Show Temporarily stays hidden until a selected trigger reveals it. It never reserves layout space." : {},
     "Show Workspace" : {
       "localizations" : {
         "ja" : {
@@ -126082,6 +126096,7 @@
       }
     },
     "Show the workspace bar as an overlay only while the selected modifiers are held" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -146843,6 +146858,7 @@
         }
       }
     },
+    "Visibility" : {},
     "Visible" : {
       "localizations" : {
         "ja" : {
@@ -147835,6 +147851,7 @@
         }
       }
     },
+    "When off, the mouse cannot summon the bar, but it can keep an already-visible bar open for interaction." : {},
     "When sharing fingers with column scrolling in Niri, workspace swipes use the perpendicular direction on each display. The selected axis applies without column scrolling." : {
       "localizations" : {
         "ja" : {
@@ -150191,6 +150208,7 @@
         }
       }
     },
+    "Workspace Changes" : {},
     "Workspace Configurations" : {
       "localizations" : {
         "ja" : {
@@ -150689,6 +150707,7 @@
       }
     },
     "Workspace IDs use positive numeric slots. Display Name stays editable. Workspaces 10+ start with unassigned direct hotkeys; add them here or through IPC/CLI." : {},
+    "Workspace and Column Changes" : {},
     "Workspace home monitors" : {
       "localizations" : {
         "ja" : {

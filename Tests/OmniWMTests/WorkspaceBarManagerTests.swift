@@ -72,6 +72,21 @@ final class WorkspaceBarManagerTests: XCTestCase {
         XCTAssertEqual(calls, 2)
     }
 
+    func testPrimaryBarFramesChangedCallbackTracksRetainedBarVisibility() {
+        let manager = makeManager()
+        defer { manager.cleanup() }
+        var calls = 0
+        manager.onPrimaryBarFramesChanged = { calls += 1 }
+        var bar = barSurface(itemCount: 1)
+        bar.retainWhileHidden = true
+        for (visible, expectedCalls) in [(true, 1), (false, 2), (false, 2), (true, 3)] {
+            bar.visible = visible
+            manager.apply([bar])
+            XCTAssertEqual(calls, expectedCalls)
+            XCTAssertEqual(manager.barsByMonitor.count, 1)
+        }
+    }
+
     private func makeManager() -> WorkspaceBarManager {
         let manager = WorkspaceBarManager(motionPolicy: MotionPolicy(animationsEnabled: false))
         manager.setup(controller: controller, settings: controller.settings)

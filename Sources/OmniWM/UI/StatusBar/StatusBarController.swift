@@ -71,6 +71,9 @@ final class StatusBarController: NSObject {
         host.isExemptWindow = { [weak hiddenBarController] in
             hiddenBarController?.statusItems.ownsStatusItemWindow($0) == true
         }
+        host.onVisibilityChanged = { [weak controller] in
+            controller?.workspaceBarManager.refreshHover()
+        }
         menuHost = host
 
         hiddenBarController.statusItems.bind(omniButton: button, statusItem: ownedStatusItem)
@@ -110,6 +113,10 @@ final class StatusBarController: NSObject {
             hiddenBarController.dismissPanel()
             showMenu(from: anchor)
         }
+    }
+
+    func isPanelVisible(on monitor: Monitor) -> Bool {
+        menuHost?.isVisible == true && menuHost?.panel?.screen?.displayId == monitor.displayId
     }
 
     func dismissPanel() {
