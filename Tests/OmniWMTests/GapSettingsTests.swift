@@ -687,6 +687,9 @@ final class GapSettingsTests: XCTestCase {
             XCTAssertEqual(frames.workingFrame, working)
             XCTAssertEqual(frames.fullscreenLayoutFrame, fullscreen)
             XCTAssertEqual(frames.borderSafeFillFrame, fullscreen)
+            settings.workspaceBar.visibility = .temporary
+            XCTAssertEqual(controller.fullscreenLayoutFrame(for: monitor), monitor.visibleFrame)
+            settings.workspaceBar.visibility = .alwaysVisible
         }
     }
 

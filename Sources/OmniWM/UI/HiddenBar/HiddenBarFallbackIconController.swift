@@ -123,6 +123,11 @@ final class HiddenBarFallbackIconController {
         }
     }
 
+    func displayedFrame(on monitorId: Monitor.ID) -> CGRect? {
+        guard let panel = panelsByMonitor[monitorId], panel.isVisible else { return nil }
+        return panel.frame
+    }
+
     func owns(window: NSWindow) -> Bool {
         panelsByMonitor.values.contains { $0 === window }
     }

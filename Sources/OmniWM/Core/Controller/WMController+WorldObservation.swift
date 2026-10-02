@@ -12,6 +12,7 @@ extension WMController {
         {
             columnModeToast.hide()
         }
+        workspaceBarActivityController.refresh()
         switch surfaceScope {
         case .full:
             surfaceReconciler.noteWorldChanged()
